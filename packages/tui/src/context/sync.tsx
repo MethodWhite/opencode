@@ -503,6 +503,8 @@ export const {
             project.workspace.sync(),
           ]).then(() => {
             setStore("status", "complete")
+          }).catch(() => {
+            setStore("status", "complete")
           })
         })
         .catch(async (e) => {
