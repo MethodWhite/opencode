@@ -573,7 +573,7 @@ export function Session() {
           sessionID: route.sessionID,
           modelID: selectedModel.modelID,
           providerID: selectedModel.providerID,
-        })
+        }).catch(() => {})
         dialog.clear()
       },
     },
@@ -621,6 +621,7 @@ export function Session() {
           .then(() => {
             toBottom()
           })
+          .catch(() => {})
         const parts = sync.data.part[message.id]
         prompt?.set(
           parts.reduce(
@@ -1025,7 +1026,7 @@ export function Session() {
         void sdk.client.experimental.session.background({
           sessionID: route.sessionID,
           workspace: project.workspace.current(),
-        })
+        }).catch(() => {})
         dialog.clear()
       },
     },
