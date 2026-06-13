@@ -88,10 +88,18 @@ export const { use: useSDK, provider: SDKProvider } = createSimpleContext({
         while (true) {
           if (abort.signal.aborted || ctrl.signal.aborted) break
 
-          const events = await sdk.global.event({
-            signal: ctrl.signal,
-            sseMaxRetryAttempts: 0,
-          })
+          let events
+          try {
+            events = await sdk.global.event({
+              signal: ctrl.signal,
+              sseMaxRetryAttempts: 0,
+            })
+          } catch {
+            attempt += 1
+            const backoff = Math.min(retryDelay * 2 ** (attempt - 1), maxRetryDelay)
+            await new Promise((resolve) => setTimeout(resolve, backoff))
+            continue
+          }
 
           if (Flag.OPENCODE_EXPERIMENTAL_WORKSPACES) {
             // Start syncing workspaces, it's important to do this after
