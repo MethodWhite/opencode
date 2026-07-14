@@ -17,20 +17,34 @@ export type DecodedCredentials = {
 export class Config extends ConfigService.Service<Config>()("@opencode/ServerAuthConfig", {
   password: EffectConfig.string("OPENCODE_SERVER_PASSWORD").pipe(EffectConfig.option),
   username: EffectConfig.string("OPENCODE_SERVER_USERNAME").pipe(EffectConfig.withDefault("opencode")),
+  pqcPublicKey: EffectConfig.string("OPENCODE_PQC_PUBLIC_KEY").pipe(EffectConfig.option),
 }) {}
 
 export type Info = Context.Service.Shape<typeof Config>
 
 export function required(config: Info) {
-  return Option.isSome(config.password) && config.password.value !== ""
+  return Option.isSome(config.password) && config.password.value !== "" || Option.isSome(config.pqcPublicKey)
 }
 
 export function authorized(credentials: DecodedCredentials, config: Info) {
-  return (
-    Option.isSome(config.password) &&
-    credentials.username === config.username &&
-    Redacted.value(credentials.password) === config.password.value
-  )
+  if (Option.isSome(config.password) && config.password.value !== "") {
+    if (credentials.username === config.username && Redacted.value(credentials.password) === config.password.value) {
+      return true
+    }
+  }
+  return false
+}
+
+export function verifyPqc(challengeNonce: string, signatureB64: string, config: Info): boolean {
+  const pk = Option.getOrNull(config.pqcPublicKey)
+  if (!pk) return false
+  try {
+    const auth = require("@methodWhite/opencode-auth")
+    const result = auth.verifySignature(challengeNonce, signatureB64, pk)
+    return result.verified
+  } catch {
+    return false
+  }
 }
 
 export function header(credentials?: Credentials) {
