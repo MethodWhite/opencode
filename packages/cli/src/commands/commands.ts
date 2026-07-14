@@ -27,6 +27,24 @@ export const Commands = Spec.make(typeof OPENCODE_CLI_NAME === "string" ? OPENCO
       commands: [Spec.make("agents", { description: "List all agents" })],
     }),
     Spec.make("migrate", { description: "Migrate v1 data to v2" }),
+    Spec.make("todo", {
+      description: "Manage session todos interactively",
+      commands: [
+        Spec.make("add", {
+          description: "Add a new todo item",
+          params: {
+            content: Argument.string("content"),
+            priority: Flag.string("priority").pipe(Flag.withDefault("medium")),
+          },
+        }),
+        Spec.make("list", { description: "List all todos for current session" }),
+        Spec.make("done", {
+          description: "Mark a todo as completed",
+          params: { index: Argument.integer("index") },
+        }),
+        Spec.make("clear", { description: "Clear all completed todos" }),
+      ],
+    }),
     Spec.make("service", {
       description: "Manage the background server",
       commands: [
