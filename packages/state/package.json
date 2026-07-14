@@ -1,0 +1,18 @@
+{
+  "name": "@opencode-ai/state",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "dependencies": {
+    "@opencode-ai/core": "workspace:*",
+    "effect": "catalog:",
+    "decimal.js": "10.5.0",
+    "drizzle-orm": "catalog:"
+  },
+  "peerDependencies": {
+    "typescript": "catalog:"
+  }
+}
