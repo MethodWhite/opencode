@@ -28,7 +28,7 @@ import { optionalOmitUndefined } from "@opencode-ai/core/schema"
 import { ProviderTransform } from "./transform"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
-import { ModelStatus } from "./model-status"
+import { Model } from "@opencode-ai/core/provider/provider"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { ProviderError } from "./error"
 
@@ -936,88 +936,7 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
   }
 }
 
-const ProviderApiInfo = Schema.Struct({
-  id: Schema.String,
-  url: Schema.String,
-  npm: Schema.String,
-})
-
-const ProviderModalities = Schema.Struct({
-  text: Schema.Boolean,
-  audio: Schema.Boolean,
-  image: Schema.Boolean,
-  video: Schema.Boolean,
-  pdf: Schema.Boolean,
-})
-
-const ProviderInterleaved = Schema.Union([
-  Schema.Boolean,
-  Schema.Struct({
-    field: Schema.Literals(["reasoning", "reasoning_content", "reasoning_details"]),
-  }),
-])
-
-const ProviderCapabilities = Schema.Struct({
-  temperature: Schema.Boolean,
-  reasoning: Schema.Boolean,
-  attachment: Schema.Boolean,
-  toolcall: Schema.Boolean,
-  input: ProviderModalities,
-  output: ProviderModalities,
-  interleaved: ProviderInterleaved,
-})
-
-const ProviderCacheCost = Schema.Struct({
-  read: Schema.Finite,
-  write: Schema.Finite,
-})
-
-const ProviderCostTier = Schema.Struct({
-  input: Schema.Finite,
-  output: Schema.Finite,
-  cache: ProviderCacheCost,
-  tier: Schema.Struct({
-    type: Schema.Literal("context"),
-    size: Schema.Finite,
-  }),
-})
-
-const ProviderCost = Schema.Struct({
-  input: Schema.Finite,
-  output: Schema.Finite,
-  cache: ProviderCacheCost,
-  tiers: optionalOmitUndefined(Schema.Array(ProviderCostTier)),
-  experimentalOver200K: optionalOmitUndefined(
-    Schema.Struct({
-      input: Schema.Finite,
-      output: Schema.Finite,
-      cache: ProviderCacheCost,
-    }),
-  ),
-})
-
-const ProviderLimit = Schema.Struct({
-  context: Schema.Finite,
-  input: optionalOmitUndefined(Schema.Finite),
-  output: Schema.Finite,
-})
-
-export const Model = Schema.Struct({
-  id: ModelV2.ID,
-  providerID: ProviderV2.ID,
-  api: ProviderApiInfo,
-  name: Schema.String,
-  family: optionalOmitUndefined(Schema.String),
-  capabilities: ProviderCapabilities,
-  cost: ProviderCost,
-  limit: ProviderLimit,
-  status: ModelStatus,
-  options: Schema.Record(Schema.String, Schema.Any),
-  headers: Schema.Record(Schema.String, Schema.String),
-  release_date: Schema.String,
-  variants: optionalOmitUndefined(Schema.Record(Schema.String, Schema.Record(Schema.String, Schema.Any))),
-}).annotate({ identifier: "Model" })
-export type Model = Types.DeepMutable<Schema.Schema.Type<typeof Model>>
+export { Model }
 
 export const Info = Schema.Struct({
   id: ProviderV2.ID,
