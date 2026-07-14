@@ -3,7 +3,7 @@
 
 import WebSocket from "ws"
 import { APICallError } from "ai"
-import { ProviderError } from "@/provider/error"
+import { ProviderError } from "@opencode-ai/core/provider/error"
 import { errorMessage } from "@/util/error"
 import { ProxyEnv } from "@/util/proxy-env"
 import { isRecord } from "@/util/record"

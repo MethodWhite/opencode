@@ -12,7 +12,7 @@ import { testProviderConfig } from "../lib/test-provider"
 import { Env } from "@/env"
 import { Plugin } from "@/plugin"
 import { Provider } from "@/provider/provider"
-import { ProviderError } from "@/provider/error"
+import { ProviderError } from "@opencode-ai/core/provider/error"
 
 afterEach(async () => {
   await disposeAllInstances()

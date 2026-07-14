@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@opencode-ai/core": "workspace:*",
+    "ai": "catalog:",
     "effect": "catalog:",
     "decimal.js": "10.5.0",
     "drizzle-orm": "catalog:"

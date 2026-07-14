@@ -1,5 +1,5 @@
 import WebSocket from "ws"
-import { ProviderError } from "@/provider/error"
+import { ProviderError } from "@opencode-ai/core/provider/error"
 import { isRecord } from "@/util/record"
 import { OpenAIWebSocket } from "./ws"
 

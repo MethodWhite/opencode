@@ -2,20 +2,14 @@ import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import path from "path"
 import { Global } from "@opencode-ai/core/global"
 import { FSUtil } from "@opencode-ai/core/fs-util"
+import { NotFoundError } from "@opencode-ai/core/storage/storage"
 import { Effect, Exit, Layer, Option, RcMap, Schema, Context, TxReentrantLock } from "effect"
 import { NonNegativeInt } from "@opencode-ai/core/schema"
 import { Git } from "@/git"
 
 type Migration = (dir: string, fs: FSUtil.Interface, git: Git.Interface) => Effect.Effect<void, FSUtil.Error>
 
-export class NotFoundError extends Schema.TaggedErrorClass<NotFoundError>()("NotFoundError", {
-  message: Schema.String,
-}) {
-  static isInstance(input: unknown): input is NotFoundError {
-    return input instanceof NotFoundError
-  }
-}
-
+export { NotFoundError }
 export type Error = FSUtil.Error | NotFoundError
 
 const RootFile = Schema.Struct({
