@@ -5,7 +5,8 @@ import * as Socket from "effect/unstable/socket/Socket"
 import { FSUtil } from "@opencode-ai/core/fs-util"
 import * as Observability from "@opencode-ai/core/observability"
 import { Account } from "@/account/account"
-import { Agent } from "@/agent/agent"
+import { Agent } from "@opencode-ai/core/agent/agent"
+import { node as agentNode } from "@/agent/agent"
 import { Auth } from "@/auth"
 import { BackgroundJob } from "@/background/job"
 import { Command } from "@/command"
@@ -41,7 +42,8 @@ import { SessionSummary } from "@/session/summary"
 import { Todo } from "@/session/todo"
 import { SessionShare } from "@/share/session"
 import { ShareNext } from "@/share/share-next"
-import { Skill } from "@/skill"
+import { Skill } from "@opencode-ai/core/skill/index"
+import { node as skillNode } from "@/skill"
 import { Discovery } from "@/skill/discovery"
 import { Snapshot } from "@/snapshot"
 import { Storage } from "@/storage/storage"
@@ -225,8 +227,8 @@ const app = LayerNode.group([
   ModelsDev.node,
   Provider.node,
   ProviderAuth.node,
-  Agent.node,
-  Skill.node,
+  agentNode,
+  skillNode,
   Discovery.node,
   Question.node,
   Permission.node,

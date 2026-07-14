@@ -1,11 +1,12 @@
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { Effect, Layer, Context, Schema } from "effect"
 import { SessionV1 } from "@opencode-ai/core/v1/session"
-import { EventV2Bridge } from "@/event-v2-bridge"
-import { Snapshot } from "@/snapshot"
+import { EventV2Bridge } from "@opencode-ai/core/event-v2-bridge"
+import { Snapshot } from "@opencode-ai/core/snapshot"
 import { Session } from "./session"
 import { SessionID, MessageID } from "./schema"
-import { Config } from "@/config/config"
+import type { Config } from "@opencode-ai/core/config/config"
+import { defaultLayer as _cfgLayer, node as _cfgNode } from "@/config/config"
 
 function unquoteGitPath(input: string) {
   if (!input.startsWith('"')) return input

@@ -1,5 +1,5 @@
 import { Account } from "@/account/account"
-import { Agent } from "@/agent/agent"
+import { Agent } from "@opencode-ai/core/agent/agent"
 import { BackgroundJob } from "@/background/job"
 import { Config } from "@/config/config"
 import { InstanceState } from "@/effect/instance-state"

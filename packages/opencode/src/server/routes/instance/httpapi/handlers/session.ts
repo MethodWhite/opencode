@@ -1,5 +1,5 @@
 import { PermissionV1 } from "@opencode-ai/core/v1/permission"
-import { Agent } from "@/agent/agent"
+import { Agent } from "@opencode-ai/core/agent/agent"
 import { SessionV1 } from "@opencode-ai/core/v1/session"
 import { EventV2Bridge } from "@/event-v2-bridge"
 import { Command } from "@/command"

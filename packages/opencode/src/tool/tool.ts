@@ -6,7 +6,7 @@ import type { MessageV2 } from "../session/message-v2"
 import type { Permission } from "../permission"
 import type { SessionID, MessageID } from "../session/schema"
 import * as Truncate from "./truncate"
-import { Agent } from "@/agent/agent"
+import { Agent } from "@opencode-ai/core/agent/agent"
 
 interface Metadata {
   [key: string]: any
