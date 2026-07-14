@@ -22,6 +22,12 @@ const Thought = Schema.Struct({
   needsMoreThoughts: Schema.optional(Schema.Boolean).annotate({
     description: "If more thoughts are needed beyond estimate",
   }),
+  isAction: Schema.optional(Schema.Boolean).annotate({
+    description: "Whether this thought is an action step to be executed",
+  }),
+  actionCommand: Schema.optional(Schema.String).annotate({
+    description: "The command to execute if isAction=true",
+  }),
 })
 
 export const Parameters = Schema.Struct({
@@ -34,6 +40,8 @@ export const Parameters = Schema.Struct({
   branchFromThought: Schema.optional(Schema.Number),
   branchId: Schema.optional(Schema.String),
   needsMoreThoughts: Schema.optional(Schema.Boolean),
+  isAction: Schema.optional(Schema.Boolean),
+  actionCommand: Schema.optional(Schema.String),
 })
 
 interface ThoughtEntry {
@@ -44,6 +52,8 @@ interface ThoughtEntry {
   branchFromThought?: number
   branchId?: string
   needsMoreThoughts?: boolean
+  isAction?: boolean
+  actionCommand?: string
 }
 
 // In-memory thought chains per session
@@ -57,9 +67,18 @@ function formatChain(entries: ThoughtEntry[]): string {
         : e.branchFromThought
           ? `[BRANCH from thought ${e.branchFromThought}]`
           : `[Thought ${e.thoughtNumber}]`
-      return `${prefix}\n${e.thought}`
+      const action = e.isAction ? ` [ACTION${e.actionCommand ? `: ${e.actionCommand}` : ""}]` : ""
+      return `${prefix}${action}\n${e.thought}`
     })
     .join("\n\n")
+}
+
+function formatPlan(entries: ThoughtEntry[]): string {
+  const actions = entries.filter((e) => e.isAction)
+  const plan = actions.map((e, i) => {
+    return `Step ${i + 1}: ${e.thought}${e.actionCommand ? `\n   Command: ${e.actionCommand}` : ""}`
+  })
+  return `Action plan (${actions.length} steps):\n\n${plan.join("\n\n")}`
 }
 
 export const SequentialThinkingTool = Tool.define<typeof Parameters, {}, {}>(
@@ -84,6 +103,8 @@ export const SequentialThinkingTool = Tool.define<typeof Parameters, {}, {}>(
             branchFromThought: params.branchFromThought,
             branchId: params.branchId,
             needsMoreThoughts: params.needsMoreThoughts,
+            isAction: params.isAction,
+            actionCommand: params.actionCommand,
           }
 
           // If revision, replace the old thought
@@ -107,14 +128,21 @@ export const SequentialThinkingTool = Tool.define<typeof Parameters, {}, {}>(
 
           const formatted = formatChain(chain)
           const isComplete = !params.nextThoughtNeeded
+          const hasActions = chain.some((e) => e.isAction)
+
+          const output = isComplete
+            ? hasActions
+              ? `Reasoning chain complete with action plan.\n\n${formatted}\n\n${formatPlan(chain)}`
+              : `Reasoning chain complete.\n\n${formatted}`
+            : entry.thought
 
           return {
             title: isComplete
-              ? `Completed reasoning chain (${chain.length} thoughts)`
+              ? hasActions
+                ? `Completed reasoning chain (${chain.length} thoughts, ${chain.filter((e) => e.isAction).length} actions)`
+                : `Completed reasoning chain (${chain.length} thoughts)`
               : `Thought ${params.thoughtNumber}/${params.totalThoughts}`,
-            output: isComplete
-              ? `Reasoning chain complete.\n\n${formatted}`
-              : entry.thought,
+            output,
             metadata: {},
           }
         }),

@@ -16,7 +16,15 @@ You can:
 - Add a new thought (extends the chain)
 - Revise a previous thought (goes back and thinks again)
 - Branch from an existing thought to explore alternatives
+- Mark a thought as an action step with an optional command
 - Signal when the chain is complete
+
+## Action planning
+
+Set `isAction=true` on a thought to designate it as an executable step.
+Optionally provide `actionCommand` with the shell command to run.
+When the chain completes with action steps, the output includes an
+action plan listing each step and its command.
 
 ## Guidelines
 
@@ -24,5 +32,6 @@ You can:
 2. Add analysis steps one at a time
 3. If you realize a previous step was wrong, use revision
 4. If you see multiple paths, use branching
-5. Be explicit about your confidence level
-6. End with a conclusion and mark complete=true
+5. For executable steps, set isAction=true and optionally actionCommand
+6. Be explicit about your confidence level
+7. End with a conclusion and mark complete=true
