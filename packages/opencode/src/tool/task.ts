@@ -33,8 +33,8 @@ const BACKGROUND_STARTED = [
   "DO NOT sleep, poll for progress, ask the task for status, or duplicate this task's work — avoid working with the same files or topics it is using.",
   "Work on non-overlapping tasks, or briefly tell the user what you launched and end your response.",
 ].join("\n")
-const BACKGROUND_UPDATED = [
-  "Additional context sent to the running background task.",
+const BACKGROUND_UPDATED = (description: string) => [
+  `Additional context sent to the background task "${description}".`,
   "The task is still working in the background. You will be notified automatically when it finishes.",
   "DO NOT sleep, poll for progress, ask the task for status, or duplicate this task's work — avoid working with the same files or topics it is using.",
   "Work on non-overlapping tasks, or briefly tell the user what you sent and end your response.",
@@ -49,6 +49,12 @@ const BaseParameterFields = {
       "This should only be set if you mean to resume a previous task (you can pass a prior task_id and the task will continue the same subagent session as before instead of creating a fresh one)",
   }),
   command: Schema.optional(Schema.String).annotate({ description: "The command that triggered this task" }),
+  priority: Schema.optional(Schema.Literal("high", "medium", "low")).annotate({
+    description: "Priority level for this task (high, medium, low)",
+  }),
+  tags: Schema.optional(Schema.Array(Schema.String)).annotate({
+    description: "Tags for categorizing this task",
+  }),
 }
 
 const BaseParameters = Schema.Struct(BaseParameterFields)
@@ -199,6 +205,13 @@ export const TaskTool = Tool.define(
 
       const runTask = Effect.fn("TaskTool.runTask")(function* () {
         const parts = yield* ops.resolvePromptParts(params.prompt)
+        const contextParts: SessionPrompt.PromptInput["parts"] = []
+        if (params.priority || (params.tags && params.tags.length > 0)) {
+          const lines: string[] = ["## Task Context"]
+          if (params.priority) lines.push(`- Priority: ${params.priority}`)
+          if (params.tags && params.tags.length > 0) lines.push(`- Tags: ${params.tags.join(", ")}`)
+          contextParts.push({ type: "text", synthetic: true, text: lines.join("\n") })
+        }
         const result = yield* ops.prompt({
           messageID: MessageID.ascending(),
           sessionID: nextSession.id,
@@ -208,7 +221,7 @@ export const TaskTool = Tool.define(
           },
           variant: next.model ? undefined : variant,
           agent: next.name,
-          parts,
+          parts: [...contextParts, ...parts],
         })
         return result.parts.findLast((item) => item.type === "text")?.text ?? ""
       })
@@ -265,7 +278,7 @@ export const TaskTool = Tool.define(
             sessionID: nextSession.id,
             state: "running",
             summary: "Background task updated",
-            text: BACKGROUND_UPDATED,
+            text: BACKGROUND_UPDATED(params.description),
           }),
         }
       }
