@@ -42,4 +42,6 @@ export const InstanceState = {
   context,
   workspaceID,
   directory,
+  make,
+  get,
 }

@@ -114,13 +114,6 @@ type Info = ConfigV1.Info & {
   plugin_origins?: ConfigPlugin.Origin[]
 }
 
-type State = {
-  config: Info
-  directories: string[]
-  deps: Fiber.Fiber<void>[]
-  consoleState: ConsoleState
-}
-
 export interface Interface {
   readonly get: () => Effect.Effect<Info>
   readonly getGlobal: () => Effect.Effect<Info>
@@ -135,6 +128,13 @@ export interface Interface {
 export class Service extends Context.Service<Service, Interface>()("@opencode/Config") {}
 
 export const use = serviceUse(Service)
+
+type State = {
+  config: Info
+  directories: string[]
+  deps: Fiber.Fiber<void>[]
+  consoleState: ConsoleState
+}
 
 function globalConfigFile() {
   const candidates = ["opencode.jsonc", "opencode.json", "config.json"].map((file) =>

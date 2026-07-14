@@ -1,5 +1,5 @@
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
-import { PermissionV1 } from "@opencode-ai/core/v1/permission"
+
 import { Config } from "@/config/config"
 import { serviceUse } from "@opencode-ai/core/effect/service-use"
 import { Provider } from "@/provider/provider"
@@ -20,40 +20,24 @@ import { Global } from "@opencode-ai/core/global"
 import path from "path"
 import { Plugin } from "@/plugin"
 import { Skill } from "../skill"
-import { Effect, Context, Layer, Schema } from "effect"
+import { Effect, Layer, Schema } from "effect"
 import { InstanceState } from "@/effect/instance-state"
 import * as Option from "effect/Option"
 import * as OtelTracer from "@effect/opentelemetry/Tracer"
-import { AbsolutePath, type DeepMutable } from "@opencode-ai/core/schema"
+import { AbsolutePath } from "@opencode-ai/core/schema"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
 import { LocationServiceMap } from "@opencode-ai/core/location-layer"
 import { PluginBoot } from "@opencode-ai/core/plugin/boot"
 import { Reference } from "@opencode-ai/core/reference"
 import { Location } from "@opencode-ai/core/location"
-
-export const Info = Schema.Struct({
-  name: Schema.String,
-  description: Schema.optional(Schema.String),
-  mode: Schema.Literals(["subagent", "primary", "all"]),
-  native: Schema.optional(Schema.Boolean),
-  hidden: Schema.optional(Schema.Boolean),
-  topP: Schema.optional(Schema.Finite),
-  temperature: Schema.optional(Schema.Finite),
-  color: Schema.optional(Schema.String),
-  permission: PermissionV1.Ruleset,
-  model: Schema.optional(
-    Schema.Struct({
-      modelID: ModelV2.ID,
-      providerID: ProviderV2.ID,
-    }),
-  ),
-  variant: Schema.optional(Schema.String),
-  prompt: Schema.optional(Schema.String),
-  options: Schema.Record(Schema.String, Schema.Unknown),
-  steps: Schema.optional(Schema.Finite),
-}).annotate({ identifier: "Agent" })
-export type Info = DeepMutable<Schema.Schema.Type<typeof Info>>
+import {
+  Info,
+  type Interface,
+  Service,
+} from "@opencode-ai/core/agent/agent"
+export { Info, Service }
+export type { Interface }
 
 const GeneratedAgent = Schema.Struct({
   identifier: Schema.String,
@@ -61,27 +45,7 @@ const GeneratedAgent = Schema.Struct({
   systemPrompt: Schema.String,
 })
 
-export interface Interface {
-  readonly get: (agent: string) => Effect.Effect<Info>
-  readonly list: () => Effect.Effect<Info[]>
-  readonly defaultInfo: () => Effect.Effect<Info>
-  readonly defaultAgent: () => Effect.Effect<string>
-  readonly generate: (input: {
-    description: string
-    model?: { providerID: ProviderV2.ID; modelID: ModelV2.ID }
-  }) => Effect.Effect<
-    {
-      identifier: string
-      whenToUse: string
-      systemPrompt: string
-    },
-    Provider.DefaultModelError
-  >
-}
-
-type State = Omit<Interface, "generate">
-
-export class Service extends Context.Service<Service, Interface>()("@opencode/Agent") {}
+type State = Interface
 
 export const use = serviceUse(Service)
 
@@ -341,16 +305,17 @@ export const layer = Layer.effect(
           return (yield* defaultInfo()).name
         })
 
-        return {
+        const result: State = {
           get,
           list,
           defaultInfo,
           defaultAgent,
-        } satisfies State
+        }
+        return result
       }),
     )
 
-    return Service.of({
+    const svc = Service.of({
       get: Effect.fn("Agent.get")(function* (agent: string) {
         return yield* InstanceState.useEffect(state, (s) => s.get(agent))
       }),
@@ -363,7 +328,8 @@ export const layer = Layer.effect(
       defaultAgent: Effect.fn("Agent.defaultAgent")(function* () {
         return yield* InstanceState.useEffect(state, (s) => s.defaultAgent())
       }),
-      generate: Effect.fn("Agent.generate")(function* (input: {
+    }) as any
+    svc.generate = Effect.fn("Agent.generate")(function* (input: {
         description: string
         model?: { providerID: ProviderV2.ID; modelID: ModelV2.ID }
       }) {
@@ -431,8 +397,8 @@ export const layer = Layer.effect(
         }
 
         return yield* Effect.promise(() => generateObject(params).then((r) => r.object))
-      }),
-    })
+      })
+    return svc
   }),
 )
 

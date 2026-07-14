@@ -7,8 +7,9 @@ import { SessionID, MessageID, PartID } from "./schema"
 import { MessageV2 } from "./message-v2"
 import { SessionRevert } from "./revert"
 import { Session } from "./session"
-import { Agent } from "../agent/agent"
-import { Provider } from "@/provider/provider"
+import { Agent } from "@opencode-ai/core/agent/agent"
+import { defaultLayer as agentDefaultLayer, node as agentNode } from "@/agent/agent"
+import { Provider } from "@opencode-ai/core/provider/provider"
 
 import { type Tool as AITool, tool, jsonSchema } from "ai"
 import type { JSONSchema7 } from "@ai-sdk/provider"
@@ -26,13 +27,14 @@ import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
 import * as Stream from "effect/Stream"
 import { Command } from "../command"
 import { pathToFileURL, fileURLToPath } from "url"
-import { Config } from "@/config/config"
+import type { Config } from "@opencode-ai/core/config/config"
+import { defaultLayer as _cfgLayer, node as _cfgNode } from "@/config/config"
 import { ConfigMarkdown } from "@/config/markdown"
 import { SessionSummary } from "./summary"
 import { NamedError } from "@opencode-ai/core/util/error"
 import { SessionProcessor } from "./processor"
 import { Tool } from "@/tool/tool"
-import { Permission } from "@/permission"
+import { Permission } from "@opencode-ai/core/permission"
 import { SessionStatus } from "./status"
 import { LLM } from "./llm"
 import { Shell } from "@/shell/shell"
@@ -43,11 +45,11 @@ import { Image } from "@/image/image"
 import { decodeDataUrl } from "@/util/data-url"
 import { Process } from "@/util/process"
 import { Cause, Effect, Exit, Latch, Layer, Option, Scope, Context, Schema, Types } from "effect"
-import { InstanceState } from "@/effect/instance-state"
+import { InstanceState } from "@opencode-ai/core/effect/instance-state"
 import { TaskTool, type TaskPromptOps } from "@/tool/task"
 import { SessionRunState } from "./run-state"
-import { RuntimeFlags } from "@/effect/runtime-flags"
-import { EventV2Bridge } from "@/event-v2-bridge"
+import { RuntimeFlags } from "@opencode-ai/core/effect/runtime-flags"
+import { EventV2Bridge } from "@opencode-ai/core/event-v2-bridge"
 import { Database } from "@opencode-ai/core/database/database"
 import { SessionEvent } from "@opencode-ai/core/session/event"
 import { SessionMessage } from "@opencode-ai/core/session/message"
@@ -1575,7 +1577,7 @@ export const defaultLayer = Layer.suspend(() =>
     Layer.provide(Image.defaultLayer),
     Layer.provide(
       Layer.mergeAll(
-        Agent.defaultLayer,
+        agentDefaultLayer,
         Database.defaultLayer,
         SystemPrompt.defaultLayer,
         LLM.defaultLayer,
@@ -1693,7 +1695,7 @@ const quoteTrimRegex = /^["']|["']$/g
 export const node = LayerNode.make(layer, [
   SessionStatus.node,
   Session.node,
-  Agent.node,
+  agentNode,
   Provider.node,
   SessionProcessor.node,
   SessionCompaction.node,

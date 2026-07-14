@@ -3,22 +3,24 @@ import { SessionV1 } from "@opencode-ai/core/v1/session"
 import { ConfigV1 } from "@opencode-ai/core/v1/config/config"
 import { Session } from "./session"
 import { SessionID, MessageID, PartID } from "./schema"
-import { Provider } from "@/provider/provider"
+import { Provider } from "@opencode-ai/core/provider/provider"
 import { MessageV2 } from "./message-v2"
 import { Token } from "@/util/token"
 import { SessionProcessor } from "./processor"
-import { Agent } from "@/agent/agent"
+import { Agent } from "@opencode-ai/core/agent/agent"
+import { defaultLayer as agentDefaultLayer, node as agentNode } from "@/agent/agent"
 import { Plugin } from "@/plugin"
-import { Config } from "@/config/config"
-import { NotFoundError } from "@/storage/storage"
+import type { Config } from "@opencode-ai/core/config/config"
+import { defaultLayer as _cfgLayer, node as _cfgNode } from "@/config/config"
+import { NotFoundError } from "@opencode-ai/core/storage/storage"
 
 import { Effect, Layer, Context } from "effect"
 import * as DateTime from "effect/DateTime"
-import { InstanceState } from "@/effect/instance-state"
+import { InstanceState } from "@opencode-ai/core/effect/instance-state"
 import { isOverflow as overflow, usable } from "./overflow"
 import { serviceUse } from "@opencode-ai/core/effect/service-use"
-import { RuntimeFlags } from "@/effect/runtime-flags"
-import { EventV2Bridge } from "@/event-v2-bridge"
+import { RuntimeFlags } from "@opencode-ai/core/effect/runtime-flags"
+import { EventV2Bridge } from "@opencode-ai/core/event-v2-bridge"
 import { SessionEvent } from "@opencode-ai/core/session/event"
 import { SessionMessage } from "@opencode-ai/core/session/message"
 import { ProviderV2 } from "@opencode-ai/core/provider"
@@ -598,7 +600,7 @@ export const defaultLayer = Layer.suspend(() =>
     Layer.provide(Provider.defaultLayer),
     Layer.provide(Session.defaultLayer),
     Layer.provide(SessionProcessor.defaultLayer),
-    Layer.provide(Agent.defaultLayer),
+    Layer.provide(agentDefaultLayer),
     Layer.provide(Plugin.defaultLayer),
     Layer.provide(Config.defaultLayer),
     Layer.provide(RuntimeFlags.defaultLayer),
@@ -609,7 +611,7 @@ export const defaultLayer = Layer.suspend(() =>
 export const node = LayerNode.make(layer, [
   Config.node,
   Session.node,
-  Agent.node,
+  agentNode,
   Plugin.node,
   SessionProcessor.node,
   Provider.node,

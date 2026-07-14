@@ -45,8 +45,10 @@ import { LSP } from "@/lsp/lsp"
 import { Instruction } from "../session/instruction"
 import { FSUtil } from "@opencode-ai/core/fs-util"
 import { EventV2Bridge } from "@/event-v2-bridge"
-import { Agent } from "../agent/agent"
-import { Skill } from "../skill"
+import { Agent } from "@opencode-ai/core/agent/agent"
+import { Skill } from "@opencode-ai/core/skill/index"
+import { defaultLayer as agentDefaultLayer, node as agentNode } from "@/agent/agent"
+import { defaultLayer as skillDefaultLayer, node as skillNode } from "@/skill"
 import { Permission } from "@/permission"
 import { BackgroundJob } from "@/background/job"
 import { RuntimeFlags } from "@/effect/runtime-flags"
@@ -322,8 +324,8 @@ export const defaultLayer = Layer.suspend(() =>
       Layer.provide(Plugin.defaultLayer),
       Layer.provide(Question.defaultLayer),
       Layer.provide(Todo.defaultLayer),
-      Layer.provide(Skill.defaultLayer),
-      Layer.provide(Agent.defaultLayer),
+      Layer.provide(skillDefaultLayer),
+      Layer.provide(agentDefaultLayer),
       Layer.provide(Session.defaultLayer),
       Layer.provide(BackgroundJob.defaultLayer),
       Layer.provide(Provider.defaultLayer),
@@ -420,8 +422,8 @@ export const node = LayerNode.make(layer.pipe(Layer.provide(Ripgrep.defaultLayer
   Plugin.node,
   Question.node,
   Todo.node,
-  Agent.node,
-  Skill.node,
+  agentNode,
+  skillNode,
   Session.node,
   BackgroundJob.node,
   Provider.node,

@@ -1,4 +1,5 @@
-import { Agent } from "@/agent/agent"
+import { Agent } from "@opencode-ai/core/agent/agent"
+import { defaultLayer as agentDefaultLayer } from "@/agent/agent"
 import { Command } from "@/command"
 import { InstanceRef } from "@/effect/instance-ref"
 import { InstanceStore } from "@/project/instance-store"
@@ -202,7 +203,7 @@ export const layer = Layer.effect(
 export const defaultLayer = layer.pipe(
   Layer.provide(loaderLayer),
   Layer.provide(Provider.defaultLayer),
-  Layer.provide(Agent.defaultLayer),
+  Layer.provide(agentDefaultLayer),
   Layer.provide(Command.defaultLayer),
   Layer.provide(InstanceStore.defaultLayer),
 )

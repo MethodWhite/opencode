@@ -5,7 +5,7 @@ import { Database } from "@opencode-ai/core/database/database"
 import { eq } from "drizzle-orm"
 import { asc } from "drizzle-orm"
 import { TodoTable } from "@opencode-ai/core/session/sql"
-import { EventV2Bridge } from "@/event-v2-bridge"
+import { EventV2Bridge } from "@opencode-ai/core/event-v2-bridge"
 import { EventV2 } from "@opencode-ai/core/event"
 
 export const Info = Schema.Struct({

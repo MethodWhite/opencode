@@ -1,7 +1,7 @@
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { Context, Effect, Layer } from "effect"
 
-import { InstanceState } from "@/effect/instance-state"
+import { InstanceState } from "@opencode-ai/core/effect/instance-state"
 
 import PROMPT_ANTHROPIC from "./prompt/anthropic.txt"
 import PROMPT_DEFAULT from "./prompt/default.txt"
@@ -12,10 +12,11 @@ import PROMPT_KIMI from "./prompt/kimi.txt"
 
 import PROMPT_CODEX from "./prompt/codex.txt"
 import PROMPT_TRINITY from "./prompt/trinity.txt"
-import type { Provider } from "@/provider/provider"
-import type { Agent } from "@/agent/agent"
-import { Permission } from "@/permission"
-import { Skill } from "@/skill"
+import type { Provider } from "@opencode-ai/core/provider/provider"
+import type { Agent } from "@opencode-ai/core/agent/agent"
+import { Permission } from "@opencode-ai/core/permission"
+import { Skill } from "@opencode-ai/core/skill/index"
+import { defaultLayer as skillLayer, node as skillNode } from "@/skill"
 import { AbsolutePath } from "@opencode-ai/core/schema"
 import { Location } from "@opencode-ai/core/location"
 import { LocationServiceMap } from "@opencode-ai/core/location-layer"
@@ -108,10 +109,10 @@ export const layer = Layer.effect(
   }),
 )
 
-export const defaultLayer = layer.pipe(Layer.provide(Skill.defaultLayer), Layer.provide(LocationServiceMap.layer))
+export const defaultLayer = layer.pipe(Layer.provide(skillLayer), Layer.provide(LocationServiceMap.layer))
 
 const locationServiceMapNode = LayerNode.make(LocationServiceMap.layer, [])
 
-export const node = LayerNode.make(layer, [Skill.node, locationServiceMapNode])
+export const node = LayerNode.make(layer, [skillNode, locationServiceMapNode])
 
 export * as SystemPrompt from "./system"

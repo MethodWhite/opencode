@@ -4,11 +4,13 @@ import { Image } from "@/image/image"
 import { SessionV1 } from "@opencode-ai/core/v1/session"
 import { Cause, Deferred, Effect, Exit, Layer, Context, Scope, Schema } from "effect"
 import * as Stream from "effect/Stream"
-import { Agent } from "@/agent/agent"
-import { Config } from "@/config/config"
-import { Permission } from "@/permission"
+import { Agent } from "@opencode-ai/core/agent/agent"
+import { defaultLayer as agentDefaultLayer, node as agentNode } from "@/agent/agent"
+import type { Config } from "@opencode-ai/core/config/config"
+import { defaultLayer as _cfgLayer, node as _cfgNode } from "@/config/config"
+import { Permission } from "@opencode-ai/core/permission"
 import { Plugin } from "@/plugin"
-import { Snapshot } from "@/snapshot"
+import { Snapshot } from "@opencode-ai/core/snapshot"
 import { Session } from "./session"
 import { LLM } from "./llm"
 import { MessageV2 } from "./message-v2"
@@ -18,18 +20,18 @@ import type { SessionID } from "./schema"
 import { SessionRetry } from "./retry"
 import { SessionStatus } from "./status"
 import { SessionSummary } from "./summary"
-import type { Provider } from "@/provider/provider"
+import type { Provider } from "@opencode-ai/core/provider/provider"
 import { Question } from "@/question"
 import { errorMessage } from "@/util/error"
-import { isRecord } from "@/util/record"
-import { EventV2Bridge } from "@/event-v2-bridge"
+import { isRecord } from "@opencode-ai/core/util/record"
+import { EventV2Bridge } from "@opencode-ai/core/event-v2-bridge"
 import { Database } from "@opencode-ai/core/database/database"
 import { SessionEvent } from "@opencode-ai/core/session/event"
 import { SessionMessage } from "@opencode-ai/core/session/message"
 import { ModelV2 } from "@opencode-ai/core/model"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import * as DateTime from "effect/DateTime"
-import { RuntimeFlags } from "@/effect/runtime-flags"
+import { RuntimeFlags } from "@opencode-ai/core/effect/runtime-flags"
 import { ToolOutput, Usage, type LLMEvent } from "@opencode-ai/llm"
 
 const DOOM_LOOP_THRESHOLD = 3
@@ -1051,7 +1053,7 @@ export const defaultLayer = Layer.suspend(() =>
   layer.pipe(
     Layer.provide(Session.defaultLayer),
     Layer.provide(Snapshot.defaultLayer),
-    Layer.provide(Agent.defaultLayer),
+    Layer.provide(agentDefaultLayer),
     Layer.provide(LLM.defaultLayer),
     Layer.provide(Permission.defaultLayer),
     Layer.provide(Plugin.defaultLayer),
@@ -1069,7 +1071,7 @@ export const node = LayerNode.make(layer, [
   Session.node,
   Config.node,
   Snapshot.node,
-  Agent.node,
+  agentNode,
   LLM.node,
   Permission.node,
   Plugin.node,

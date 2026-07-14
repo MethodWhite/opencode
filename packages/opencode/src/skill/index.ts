@@ -1,9 +1,9 @@
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import path from "path"
 import { pathToFileURL } from "url"
-import { Effect, Layer, Context, Schema } from "effect"
+import { Effect, Layer, Schema } from "effect"
 import { NamedError } from "@opencode-ai/core/util/error"
-import type { Agent } from "@/agent/agent"
+import type { Agent } from "@opencode-ai/core/agent/agent"
 import { EventV2Bridge } from "@/event-v2-bridge"
 import { InstanceState } from "@/effect/instance-state"
 import { Global } from "@opencode-ai/core/global"
@@ -17,6 +17,8 @@ import { RuntimeFlags } from "@/effect/runtime-flags"
 import { Glob } from "@opencode-ai/core/util/glob"
 import { Discovery } from "./discovery"
 import { isRecord } from "@/util/record"
+import { Service } from "@opencode-ai/core/skill/index"
+export { Service }
 
 const CLAUDE_EXTERNAL_DIR = ".claude"
 const AGENTS_EXTERNAL_DIR = ".agents"
@@ -244,8 +246,6 @@ const loadSkills = Effect.fnUntraced(function* (
 
   yield* Effect.logInfo("init", { count: Object.keys(state.skills).length })
 })
-
-export class Service extends Context.Service<Service, Interface>()("@opencode/Skill") {}
 
 export const layer = Layer.effect(
   Service,
