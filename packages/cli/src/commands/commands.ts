@@ -29,6 +29,20 @@ export const Commands = Spec.make(typeof OPENCODE_CLI_NAME === "string" ? OPENCO
         Spec.make("clear", { description: "Clear all completed todos" }),
       ],
     }),
+    Spec.make("lsp", {
+      description: "Manage Language Server Protocol connections",
+      commands: [
+        Spec.make("status", { description: "Show status of all LSP servers" }),
+        Spec.make("install", {
+          description: "Install an LSP server for a language",
+          params: { language: Argument.string("language") },
+        }),
+        Spec.make("diagnostics", {
+          description: "Show diagnostics for a file",
+          params: { file: Argument.string("file") },
+        }),
+      ],
+    }),
     Spec.make("service", {
       description: "Manage the background server",
       commands: [

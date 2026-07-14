@@ -19,6 +19,11 @@ const Handlers = Runtime.handlers(Commands, {
     done: () => import("./commands/handlers/todo"),
     clear: () => import("./commands/handlers/todo"),
   },
+  lsp: {
+    status: () => import("./commands/handlers/lsp"),
+    install: () => import("./commands/handlers/lsp"),
+    diagnostics: () => import("./commands/handlers/lsp"),
+  },
   service: {
     start: () => import("./commands/handlers/service/start"),
     restart: () => import("./commands/handlers/service/restart"),

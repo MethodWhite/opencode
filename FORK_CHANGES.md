@@ -11,6 +11,11 @@
   - `todo done <index>` - Mark todo as completed
   - `todo clear` - Clear all completed todos
 
+- **CLI LSP Command**: `opencode lsp {status|install|diagnostics}` for LSP management
+  - `lsp status` - Show status of all LSP servers
+  - `lsp install <language>` - Install LSP server for a language
+  - `lsp diagnostics <file>` - Show diagnostics for a file
+
 - **Synapsis MCP Auto-Detection**: Automatically detects and connects to Synapsis MCP server if available in PATH
 
 #### Fixed
@@ -26,6 +31,7 @@
 | Feature | Status | Description |
 |---------|--------|-------------|
 | Todo Interactive | ✅ Added | CLI command for todo management |
+| LSP CLI | ✅ Added | CLI commands for LSP management |
 | Synapsis Integration | ✅ Added | Auto-detect Synapsis MCP server |
 | MCP Auto-Discovery | ✅ Added | Find MCP servers in PATH |
 
