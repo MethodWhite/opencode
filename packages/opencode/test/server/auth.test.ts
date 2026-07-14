@@ -50,7 +50,7 @@ describe("ServerAuth", () => {
   })
 
   test("validates decoded credentials against effect config", () => {
-    const config = { password: Option.some("secret"), username: "alice", pqcPublicKey: Option.none() }
+    const config = { password: Option.some("secret"), username: "alice" }
 
     expect(ServerAuth.required(config)).toBe(true)
     expect(ServerAuth.authorized({ username: "alice", password: Redacted.make("secret") }, config)).toBe(true)
