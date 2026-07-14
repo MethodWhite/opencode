@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@opencode-ai/core": "workspace:*",
+    "@opencode-ai/llm": "workspace:*",
     "ai": "catalog:",
     "effect": "catalog:",
     "decimal.js": "10.5.0",
