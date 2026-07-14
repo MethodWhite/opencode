@@ -1,5 +1,5 @@
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
-import { SessionID } from "./schema"
+import { SessionID } from "@opencode-ai/state/schema"
 import { Effect, Layer, Context, Schema } from "effect"
 import { Database } from "@opencode-ai/core/database/database"
 import { eq } from "drizzle-orm"
@@ -7,6 +7,7 @@ import { asc } from "drizzle-orm"
 import { TodoTable } from "@opencode-ai/core/session/sql"
 import { EventV2Bridge } from "@opencode-ai/core/event-v2-bridge"
 import { EventV2 } from "@opencode-ai/core/event"
+import { Task } from "./task-engine"
 
 export const Info = Schema.Struct({
   content: Schema.String.annotate({ description: "Brief description of the task" }),
@@ -84,7 +85,6 @@ export const layer = Layer.effect(
 )
 
 export const defaultLayer = layer.pipe(Layer.provide(EventV2Bridge.defaultLayer), Layer.provide(Database.defaultLayer))
-
 export const node = LayerNode.make(layer, [EventV2Bridge.node, Database.node])
 
 export * as Todo from "./todo"
