@@ -1,0 +1,28 @@
+# sequential-thinking
+
+Break down complex problems into sequential reasoning steps.
+
+## When to use
+
+- When you need to reason through a complex problem step by step
+- When a question requires multiple steps of analysis
+- When you need to explore different approaches before acting
+- When the problem has multiple interdependent parts
+
+## How it works
+
+Each call adds a thought to a chain. The chain maintains context across calls.
+You can:
+- Add a new thought (extends the chain)
+- Revise a previous thought (goes back and thinks again)
+- Branch from an existing thought to explore alternatives
+- Signal when the chain is complete
+
+## Guidelines
+
+1. Start with the problem statement as thought #1
+2. Add analysis steps one at a time
+3. If you realize a previous step was wrong, use revision
+4. If you see multiple paths, use branching
+5. Be explicit about your confidence level
+6. End with a conclusion and mark complete=true
