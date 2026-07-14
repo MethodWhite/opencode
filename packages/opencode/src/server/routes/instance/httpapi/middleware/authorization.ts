@@ -37,23 +37,6 @@ function emptyCredential() {
   }
 }
 
-function validateCredential<A, E, R>(
-  effect: Effect.Effect<A, E, R>,
-  credential: ServerAuth.DecodedCredentials,
-  config: ServerAuth.Info,
-) {
-  return Effect.gen(function* () {
-    if (!ServerAuth.required(config)) return yield* effect
-    if (!ServerAuth.authorized(credential, config)) {
-      yield* HttpEffect.appendPreResponseHandler((_request, response) =>
-        Effect.succeed(HttpServerResponse.setHeader(response, "www-authenticate", WWW_AUTHENTICATE)),
-      )
-      return yield* new HttpApiError.Unauthorized({})
-    }
-    return yield* effect
-  })
-}
-
 function decodeCredential(input: string) {
   return Effect.fromResult(Encoding.decodeBase64String(input)).pipe(
     Effect.match({
@@ -82,20 +65,52 @@ function credentialFromURL(url: URL, request: HttpServerRequest.HttpServerReques
   return Effect.succeed(emptyCredential())
 }
 
+async function isPqcAuthorized(request: HttpServerRequest.HttpServerRequest, config: ServerAuth.Info): Promise<boolean> {
+  const nonce = request.headers["x-pqc-nonce"] ?? ""
+  const sig = request.headers["x-pqc-signature"] ?? ""
+  if (!nonce || !sig) return false
+  return ServerAuth.verifyPqc(nonce, sig, config)
+}
+
+function validateCredential<A, E, R>(
+  effect: Effect.Effect<A, E, R>,
+  credential: ServerAuth.DecodedCredentials,
+  config: ServerAuth.Info,
+) {
+  return Effect.gen(function* () {
+    if (!ServerAuth.required(config)) return yield* effect
+    if (ServerAuth.authorized(credential, config)) return yield* effect
+
+    // Fall back to PQC auth via headers
+    const request = yield* HttpServerRequest.HttpServerRequest
+    const pqcOk = yield* Effect.promise(() => isPqcAuthorized(request, config))
+    if (pqcOk) return yield* effect
+
+    yield* HttpEffect.appendPreResponseHandler((_request, response) =>
+      Effect.succeed(HttpServerResponse.setHeader(response, "www-authenticate", WWW_AUTHENTICATE)),
+    )
+    return yield* new HttpApiError.Unauthorized({})
+  })
+}
+
 function validateRawCredential<A, E, R>(
   effect: Effect.Effect<A, E, R>,
   credential: ServerAuth.DecodedCredentials,
   config: ServerAuth.Info,
 ) {
-  if (!ServerAuth.required(config)) return effect
-  if (!ServerAuth.authorized(credential, config))
-    return Effect.succeed(
-      HttpServerResponse.empty({
-        status: UNAUTHORIZED,
-        headers: { "www-authenticate": WWW_AUTHENTICATE },
-      }),
-    )
-  return effect
+  return Effect.gen(function* () {
+    if (!ServerAuth.required(config)) return yield* effect
+    if (ServerAuth.authorized(credential, config)) return yield* effect
+
+    const request = yield* HttpServerRequest.HttpServerRequest
+    const pqcOk = yield* Effect.promise(() => isPqcAuthorized(request, config))
+    if (pqcOk) return yield* effect
+
+    return HttpServerResponse.empty({
+      status: UNAUTHORIZED,
+      headers: { "www-authenticate": WWW_AUTHENTICATE },
+    })
+  })
 }
 
 export const authorizationRouterMiddleware = HttpRouter.middleware()(

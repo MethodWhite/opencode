@@ -3,6 +3,7 @@ export * as ServerAuth from "./auth"
 import { ConfigService } from "@/effect/config-service"
 import { Flag } from "@opencode-ai/core/flag/flag"
 import { Config as EffectConfig, Context, Option, Redacted } from "effect"
+import { importPublicKey, verifySignature, createChallenge } from "@/auth/pqc"
 
 export type Credentials = {
   password?: string
@@ -17,20 +18,41 @@ export type DecodedCredentials = {
 export class Config extends ConfigService.Service<Config>()("@opencode/ServerAuthConfig", {
   password: EffectConfig.string("OPENCODE_SERVER_PASSWORD").pipe(EffectConfig.option),
   username: EffectConfig.string("OPENCODE_SERVER_USERNAME").pipe(EffectConfig.withDefault("opencode")),
+  pqcPublicKey: EffectConfig.string("OPENCODE_PQC_PUBLIC_KEY").pipe(EffectConfig.option),
 }) {}
 
 export type Info = Context.Service.Shape<typeof Config>
 
+let cachedPqcKey: CryptoKey | undefined
+
 export function required(config: Info) {
-  return Option.isSome(config.password) && config.password.value !== ""
+  return (Option.isSome(config.password) && config.password.value !== "") || Option.isSome(config.pqcPublicKey)
 }
 
 export function authorized(credentials: DecodedCredentials, config: Info) {
-  return (
-    Option.isSome(config.password) &&
-    credentials.username === config.username &&
-    Redacted.value(credentials.password) === config.password.value
-  )
+  if (Option.isSome(config.password) && config.password.value !== "") {
+    if (credentials.username === config.username && Redacted.value(credentials.password) === config.password.value) {
+      return true
+    }
+  }
+  return false
+}
+
+export async function verifyPqc(challengeNonce: string, signatureB64: string, config: Info): Promise<boolean> {
+  const pkB64 = Option.getOrNull(config.pqcPublicKey)
+  if (!pkB64) return false
+  try {
+    if (!cachedPqcKey) cachedPqcKey = await importPublicKey(pkB64)
+    const result = await verifySignature(challengeNonce, signatureB64, cachedPqcKey)
+    return result.verified
+  } catch {
+    return false
+  }
+}
+
+export async function getChallenge(): Promise<{ nonce: string; expires_at: number }> {
+  const challenge = await createChallenge()
+  return { nonce: challenge.nonce, expires_at: challenge.expires_at }
 }
 
 export function header(credentials?: Credentials) {
