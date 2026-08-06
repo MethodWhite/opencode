@@ -21,6 +21,8 @@ type SessionMessageData = Omit<(typeof SessionMessage.Message)["Encoded"], "type
 type V1MessageData = Omit<SessionV1.Info, "id" | "sessionID">
 type V1PartData = Omit<SessionV1.Part, "id" | "sessionID" | "messageID">
 
+export type TaskID = string & { readonly TaskID: unique symbol }
+
 export const SessionTable = sqliteTable(
   "session",
   {
