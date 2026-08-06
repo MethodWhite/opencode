@@ -31,6 +31,7 @@ import { ModelV2 } from "@opencode-ai/core/model"
 import { ModelStatus } from "./model-status"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { ProviderError } from "./error"
+import { LlamaManager } from "./llama"
 
 const OPENAI_HEADER_TIMEOUT_DEFAULT = 300_000
 
@@ -337,7 +338,7 @@ function selectBedrockMantleLanguageModel(sdk: BundledSDK, modelID: string) {
   return sdk.responses?.(modelID) ?? sdk.languageModel(modelID)
 }
 
-function custom(dep: CustomDep): Record<string, CustomLoader> {
+function custom(dep: CustomDep, llama: LlamaManager): Record<string, CustomLoader> {
   return {
     anthropic: () =>
       Effect.succeed({
@@ -346,6 +347,43 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
           headers: {
             "anthropic-beta": "interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14",
           },
+        },
+      }),
+    "llamacpp-local": () =>
+      Effect.succeed({
+        autoload: true,
+        options: {
+          baseURL: "http://127.0.0.1:8080/v1",
+          apiKey: "not-needed",
+        },
+        async getModel(sdk, modelID, options, model) {
+          const merged = { ...options, ...model?.options }
+          const modelPath = merged["modelPath"]
+          if (modelPath) {
+            let port = Number(merged["port"])
+            if (!Number.isInteger(port) || port <= 0) {
+              const baseURL = merged["baseURL"]
+              let parsed: number = NaN
+              if (typeof baseURL === "string") {
+                try {
+                  parsed = Number(new URL(baseURL).port)
+                } catch {
+                  parsed = NaN
+                }
+              }
+              port = Number.isInteger(parsed) && parsed > 0 ? parsed : 8080
+            }
+            const rawCtx = Number(merged["contextLength"])
+            const contextLength = Number.isFinite(rawCtx) && rawCtx > 0 ? rawCtx : undefined
+            await llama.ensure({
+              modelID,
+              modelPath: String(modelPath),
+              port,
+              contextLength,
+              binaryPath: merged["binaryPath"] ? String(merged["binaryPath"]) : undefined,
+            })
+          }
+          return sdk.languageModel(modelID)
         },
       }),
     opencode: Effect.fnUntraced(function* (input: Info) {
@@ -1538,6 +1576,7 @@ const layer = Layer.effect(
           env: () => env.all(),
           get: (key: string) => env.get(key),
         }
+        const llama = new LlamaManager()
 
         function mergeProvider(providerID: ProviderV2.ID, provider: Partial<Info>) {
           const existing = providers[providerID]
@@ -1738,7 +1777,7 @@ const layer = Layer.effect(
           mergeProvider(providerID, patch)
         }
 
-        for (const [id, fn] of Object.entries(custom(dep))) {
+        for (const [id, fn] of Object.entries(custom(dep, llama))) {
           const providerID = ProviderV2.ID.make(id)
           if (disabled.has(providerID)) continue
           const data = database[providerID]
@@ -1829,6 +1868,8 @@ const layer = Layer.effect(
           }
         }
 
+        yield* Effect.addFinalizer(() => Effect.sync(() => llama.stopAll()))
+
         return {
           models: languages,
           providers,
@@ -1845,7 +1886,7 @@ const layer = Layer.effect(
     async function resolveSDK(model: Model, s: State, envs: Record<string, string | undefined>) {
       try {
         const provider = s.providers[model.providerID]
-        const options = { ...provider.options }
+        const options = { ...provider.options, ...model.options }
 
         if (
           model.providerID === "google-vertex" &&

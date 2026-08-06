@@ -1,6 +1,46 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "provider": {},
+  "provider": {
+    "llamacpp-local": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "llama.cpp (local, managed)",
+      "options": {
+        "baseURL": "http://127.0.0.1:8080/v1",
+        "apiKey": "not-needed",
+        "headerTimeout": 1800000,
+        "chunkTimeout": 1800000,
+        "binaryPath": "/home/methodwhite/.local/bin/llama-server"
+      },
+      "models": {
+        "qwen2.5-3b-instruct-q4_k_m.gguf": {
+          "name": "Qwen 2.5 3B (local, tool calling fiable)",
+          "limit": {
+            "context": 32768,
+            "output": 8192
+          },
+          "options": {
+            "baseURL": "http://127.0.0.1:8081/v1",
+            "port": 8081,
+            "modelPath": "/home/methodwhite/.cache/models/gguf/qwen2.5-3b-instruct-q4_k_m.gguf",
+            "contextLength": 65536
+          }
+        },
+        "gemma-4-E4B-it-OBLITERATED-Q4_K_M.gguf": {
+          "name": "Gemma 4 E4B (local, formato tool nativo incompatible)",
+          "limit": {
+            "context": 65536,
+            "output": 8192
+          },
+          "options": {
+            "baseURL": "http://127.0.0.1:8082/v1",
+            "port": 8082,
+            "modelPath": "/home/methodwhite/Proyectos/ai-ml/models/llm/gemma-4-E4B-it-OBLITERATED-Q4_K_M.gguf",
+            "contextLength": 65536
+          }
+        }
+      }
+    }
+  },
   "permission": {},
   "references": {
     "effect": {
