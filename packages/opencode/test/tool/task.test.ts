@@ -388,23 +388,23 @@ describe("tool.task", () => {
     }),
   )
 
-  it.instance("prevents subagents from launching subagents by default", () =>
-    Effect.gen(function* () {
-      const sessions = yield* Session.Service
-      const { chat, assistant } = yield* seed()
-      const child = yield* sessions.create({ parentID: chat.id, title: "child" })
-      const nestedAssistant = yield* sessions.updateMessage({
-        ...assistant,
-        id: MessageID.ascending(),
-        parentID: MessageID.ascending(),
-        sessionID: child.id,
-      })
-      const tool = yield* TaskTool
-      const def = yield* tool.init()
-      let asked = false
+  it.instance(
+    "allows subagents to launch subagents by default",
+    () =>
+      Effect.gen(function* () {
+        const sessions = yield* Session.Service
+        const { chat, assistant } = yield* seed()
+        const child = yield* sessions.create({ parentID: chat.id, title: "child" })
+        const nestedAssistant = yield* sessions.updateMessage({
+          ...assistant,
+          id: MessageID.ascending(),
+          parentID: MessageID.ascending(),
+          sessionID: child.id,
+        })
+        const tool = yield* TaskTool
+        const def = yield* tool.init()
 
-      const exit = yield* def
-        .execute(
+        const result = yield* def.execute(
           {
             description: "inspect bug",
             prompt: "look into the cache key path",
@@ -418,15 +418,13 @@ describe("tool.task", () => {
             extra: { promptOps: stubOps() },
             messages: [],
             metadata: () => Effect.void,
-            ask: () => Effect.sync(() => (asked = true)),
+            ask: () => Effect.void,
           },
         )
-        .pipe(Effect.exit)
 
-      expect(Exit.isFailure(exit)).toBe(true)
-      expect(asked).toBe(false)
-      expect(yield* sessions.children(child.id)).toHaveLength(0)
-    }),
+        expect((yield* sessions.get(result.metadata.sessionId)).parentID).toBe(child.id)
+        expect(yield* sessions.children(child.id)).toHaveLength(1)
+      }),
   )
 
   it.instance(
