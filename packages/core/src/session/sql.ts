@@ -19,6 +19,8 @@ type SessionMessageData = Omit<(typeof SessionMessage.Message)["Encoded"], "type
 type V1MessageData = Omit<SessionV1.Info, "id" | "sessionID">
 type V1PartData = Omit<SessionV1.Part, "id" | "sessionID" | "messageID">
 
+export type TaskID = string & { readonly TaskID: unique symbol }
+
 export const SessionTable = sqliteTable(
   "session",
   {
@@ -113,6 +115,38 @@ export const TodoTable = sqliteTable(
   (table) => [
     primaryKey({ columns: [table.session_id, table.position] }),
     index("todo_session_idx").on(table.session_id),
+  ],
+)
+
+export const TaskTable = sqliteTable(
+  "task",
+  {
+    id: text().primaryKey().$type<TaskID>(),
+    session_id: text()
+      .$type<SessionSchema.ID>()
+      .notNull()
+      .references(() => SessionTable.id, { onDelete: "cascade" }),
+    parent_id: text("parent_id").$type<TaskID | null>(),
+    title: text().notNull(),
+    description: text().default(""),
+    status: text().notNull().default("pending"),
+    priority: text().notNull().default("medium"),
+    category: text().notNull().default("general"),
+    rice_reach: integer().default(1),
+    rice_impact: integer().default(1),
+    rice_confidence: real().default(0.8),
+    rice_effort: integer().default(3),
+    tags: text().default(""),
+    depends_on: text().default(""),
+    estimated_hours: real(),
+    due_date: integer(),
+    position: integer().notNull().default(0),
+    ...Timestamps,
+  },
+  (table) => [
+    index("task_session_idx").on(table.session_id),
+    index("task_parent_idx").on(table.parent_id),
+    index("task_status_idx").on(table.status),
   ],
 )
 
