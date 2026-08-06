@@ -10,6 +10,8 @@ export interface LlamaWorkerConfig {
   port: number
   contextLength?: number
   binaryPath?: string
+  /** Layers to offload to the GPU via -ngl. Omit to run on CPU only. */
+  gpuLayers?: number
 }
 
 interface Worker {
@@ -108,6 +110,9 @@ export class LlamaManager {
       "--alias",
       config.modelID,
     ]
+    if (config.gpuLayers !== undefined) {
+      args.push("-ngl", String(config.gpuLayers))
+    }
 
     const fd = fs.openSync(logPath(config.port), "a")
     const proc = Process.spawn([binary, ...args], { stdin: "ignore", stdout: fd, stderr: fd })
