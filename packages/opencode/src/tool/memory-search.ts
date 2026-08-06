@@ -7,7 +7,7 @@ export const Parameters = Schema.Struct({
   max_results: Schema.optional(Schema.Number).annotate({ description: "Max results (default 5)" }),
 })
 
-export const MemorySearchTool = Tool.define<typeof Parameters, {}, {}>(
+export const MemorySearchTool = Tool.define(
   "memory-search",
   Effect.gen(function* () {
     return {
@@ -28,6 +28,6 @@ export const MemorySearchTool = Tool.define<typeof Parameters, {}, {}>(
             metadata: {},
           }
         }),
-    } satisfies Tool.DefWithoutID<typeof Parameters, {}>
+    }
   }),
 )

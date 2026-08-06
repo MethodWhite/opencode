@@ -32,6 +32,7 @@ import { LspTool } from "./lsp"
 import * as Truncate from "./truncate"
 import { ApplyPatchTool } from "./apply_patch"
 import { SequentialThinkingTool } from "./sequential-thinking"
+import { MemorySearchTool } from "./memory-search"
 import { Glob } from "@opencode-ai/core/util/glob"
 import path from "path"
 import { pathToFileURL } from "url"
@@ -113,6 +114,7 @@ const layer = Layer.effect(
     const patchtool = yield* ApplyPatchTool
     const skilltool = yield* SkillTool
     const seqthink = yield* SequentialThinkingTool
+    const memsearch = yield* MemorySearchTool
     const agent = yield* Agent.Service
     const codeMode = flags.experimentalCodeMode ? yield* Effect.promise(() => import("./code-mode")) : undefined
     const codeModeTool = codeMode ? yield* codeMode.CodeModeTool : undefined
@@ -221,6 +223,7 @@ const layer = Layer.effect(
           search: Tool.init(websearch),
           skill: Tool.init(skilltool),
           seqthink: Tool.init(seqthink),
+          memsearch: Tool.init(memsearch),
           patch: Tool.init(patchtool),
           question: Tool.init(question),
           lsp: Tool.init(lsptool),
@@ -248,6 +251,7 @@ const layer = Layer.effect(
             tool.skill,
             tool.patch,
             tool.seqthink,
+            tool.memsearch,
             ...(tool.execute ? [tool.execute] : []),
             tool.think,
             tool.mem,
