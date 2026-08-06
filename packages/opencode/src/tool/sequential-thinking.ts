@@ -81,7 +81,7 @@ function formatPlan(entries: ThoughtEntry[]): string {
   return `Action plan (${actions.length} steps):\n\n${plan.join("\n\n")}`
 }
 
-export const SequentialThinkingTool = Tool.define<typeof Parameters, {}, {}>(
+export const SequentialThinkingTool = Tool.define(
   "sequential-thinking",
   Effect.gen(function* () {
     return {
@@ -146,6 +146,6 @@ export const SequentialThinkingTool = Tool.define<typeof Parameters, {}, {}>(
             metadata: {},
           }
         }),
-    } satisfies Tool.DefWithoutID<typeof Parameters, {}>
+    }
   }),
 )
