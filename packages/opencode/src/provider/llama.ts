@@ -34,8 +34,20 @@ function logPath(port: number) {
  */
 export class LlamaManager {
   private workers = new Map<string, Worker>()
+  private spawning = new Map<string, Promise<void>>()
 
-  async ensure(config: LlamaWorkerConfig): Promise<void> {
+  ensure(config: LlamaWorkerConfig): Promise<void> {
+    const pending = this.spawning.get(config.modelID)
+    if (pending) return pending
+    // Serialize concurrent callers so only one spawn happens per model; the
+    // second caller reuses the in-flight result instead of racing a duplicate
+    // process on the same port.
+    const run = this.ensureUnsafe(config).finally(() => this.spawning.delete(config.modelID))
+    this.spawning.set(config.modelID, run)
+    return run
+  }
+
+  private async ensureUnsafe(config: LlamaWorkerConfig): Promise<void> {
     const tracked = this.workers.get(config.modelID)
 
     if (tracked && (await this.isHealthy(tracked.port))) {
@@ -104,6 +116,13 @@ export class LlamaManager {
     const deadline = Date.now() + HEALTH_TIMEOUT_MS
     while (Date.now() < deadline) {
       if (proc.exitCode !== null || proc.signalCode !== null) {
+        // Our spawn failed (e.g. the port was already bound), but a healthy
+        // server may have taken over the port in the meantime (a concurrent
+        // or orphaned process). Adopt it instead of failing.
+        if ((await this.isHealthy(config.port)) && (await this.serves(config.port, config.modelPath))) {
+          this.workers.set(config.modelID, { port: config.port })
+          return
+        }
         this.workers.delete(config.modelID)
         throw new Error(
           `llama-server exited before becoming healthy (code ${proc.exitCode ?? "signal"}). Logs: ${logPath(config.port)}`,
