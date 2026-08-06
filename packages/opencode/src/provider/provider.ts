@@ -34,6 +34,178 @@ import { ProviderError } from "./error"
 
 const OPENAI_HEADER_TIMEOUT_DEFAULT = 300_000
 
+// llama.cpp refuses JSON schema conversions with repetition ranges above this
+// bound ("number of repetitions exceeds sane defaults"), which breaks tool
+// calling when a tool schema declares large maxLength/maxItems values.
+const MAX_REPETITIONS = 1999
+
+function clampToolSchemaRepetitions(schema: any) {
+  if (typeof schema !== "object" || schema === null) return
+  for (const key of ["maxLength", "minLength", "maxItems", "minItems"] as const) {
+    const value = schema[key]
+    if (typeof value === "number" && value > MAX_REPETITIONS) schema[key] = MAX_REPETITIONS
+  }
+  for (const key of ["properties", "$defs", "definitions"]) {
+    const obj = schema[key]
+    if (obj) for (const value of Object.values(obj)) clampToolSchemaRepetitions(value)
+  }
+  const items = schema["items"]
+  if (Array.isArray(items)) for (const value of items) clampToolSchemaRepetitions(value)
+  else if (items) clampToolSchemaRepetitions(items)
+  if (Array.isArray(schema["prefixItems"]))
+    for (const value of schema["prefixItems"]) clampToolSchemaRepetitions(value)
+  if (schema["additionalProperties"]) clampToolSchemaRepetitions(schema["additionalProperties"])
+}
+
+// Small local models choke on the full tool payload (~30K+ tokens from all MCP
+// servers), so keep tool descriptions terse before sending.
+const MAX_TOOL_DESCRIPTION_LENGTH = 200
+const MAX_SCHEMA_DESCRIPTION_LENGTH = 100
+
+// Additionally keep only the tools relevant to the current instructions and cap
+// the serialized tool payload size, so a local model gets real working room
+// instead of constant compaction. Core coding tools are always kept.
+const LOCAL_TOOLS_CHAR_BUDGET = 50000
+const LOCAL_CORE_TOOLS = new Set([
+  "bash",
+  "read",
+  "edit",
+  "write",
+  "grep",
+  "glob",
+  "task",
+  "skill",
+  "todowrite",
+  "webfetch",
+])
+const LOCAL_STOPWORDS = new Set([
+  "all",
+  "an",
+  "and",
+  "are",
+  "as",
+  "at",
+  "be",
+  "but",
+  "by",
+  "can",
+  "do",
+  "does",
+  "for",
+  "from",
+  "how",
+  "in",
+  "is",
+  "it",
+  "of",
+  "on",
+  "or",
+  "some",
+  "that",
+  "the",
+  "this",
+  "to",
+  "use",
+  "what",
+  "when",
+  "where",
+  "which",
+  "will",
+  "with",
+  "you",
+  "your",
+  "de",
+  "del",
+  "el",
+  "en",
+  "es",
+  "la",
+  "las",
+  "lo",
+  "me",
+  "mi",
+  "para",
+  "por",
+  "que",
+  "se",
+  "te",
+  "un",
+  "una",
+  "como",
+  "con",
+  "este",
+  "esta",
+  "soy",
+  "yo",
+  "al",
+  "o",
+  "y",
+])
+
+function localQueryKeywords(messages: any[]) {
+  const words = new Map<string, number>()
+  const re = /[A-Za-z0-9]+/g
+  for (const msg of messages) {
+    if (msg?.role !== "user" || typeof msg.content !== "string") continue
+    for (const match of msg.content.toLowerCase().match(re) ?? []) {
+      if (match.length < 3 || LOCAL_STOPWORDS.has(match)) continue
+      words.set(match, (words.get(match) ?? 0) + 1)
+    }
+  }
+  return [...words.entries()]
+}
+
+function localToolScore(tool: any, keywords: [string, number][]) {
+  const name = String(tool?.function?.name ?? "").toLowerCase()
+  const description = String(tool?.function?.description ?? "").toLowerCase()
+  let score = 0
+  for (const [keyword, count] of keywords) {
+    if (name.includes(keyword)) score += 3 * count
+    else if (description.includes(keyword)) score += count
+  }
+  return score
+}
+
+function filterLocalTools(tools: any[], messages: any[]) {
+  const keywords = localQueryKeywords(messages)
+  const scored = tools.map((tool) => ({ tool, score: localToolScore(tool, keywords) }))
+  const isCore = (tool: any) => LOCAL_CORE_TOOLS.has(String(tool?.function?.name))
+  const ordered = [...scored.filter(({ tool }) => isCore(tool)), ...scored.filter(({ tool }) => !isCore(tool)).sort((a, b) => b.score - a.score)]
+  const kept: any[] = []
+  let size = 0
+  for (const { tool } of ordered) {
+    const json = JSON.stringify(tool)
+    if (isCore(tool) || kept.length === 0 || size + json.length <= LOCAL_TOOLS_CHAR_BUDGET) {
+      kept.push(tool)
+      size += json.length
+    }
+  }
+  return kept
+}
+
+function truncateDescription(value: string, max: number) {
+  if (typeof value !== "string" || value.length <= max) return value
+  return value.slice(0, max - 1) + "…"
+}
+
+function truncateToolDescriptions(schema: any) {
+  if (typeof schema !== "object" || schema === null) return
+  const desc = schema["description"]
+  if (typeof desc === "string" && desc.length > MAX_SCHEMA_DESCRIPTION_LENGTH) {
+    schema["description"] = truncateDescription(desc, MAX_SCHEMA_DESCRIPTION_LENGTH)
+  }
+  for (const key of ["properties", "$defs", "definitions"]) {
+    const obj = schema[key]
+    if (obj) for (const value of Object.values(obj)) truncateToolDescriptions(value)
+  }
+  const items = schema["items"]
+  if (Array.isArray(items)) for (const value of items) truncateToolDescriptions(value)
+  else if (items) truncateToolDescriptions(items)
+  if (Array.isArray(schema["prefixItems"]))
+    for (const value of schema["prefixItems"]) truncateToolDescriptions(value)
+  if (schema["additionalProperties"]) truncateToolDescriptions(schema["additionalProperties"])
+}
+
 function wrapSSE(res: Response, ms: number, ctl: AbortController) {
   if (typeof ms !== "number" || ms <= 0) return res
   if (!res.body) return res
@@ -1723,6 +1895,28 @@ const layer = Layer.effect(
             ...options["headers"],
             ...model.headers,
           }
+
+        if (model.providerID === "llamacpp-local") {
+          options["transformRequestBody"] = (args: any) => {
+            const tools = args.tools
+            if (Array.isArray(tools)) {
+              for (const tool of tools) {
+                const fn = tool?.function
+                if (!fn) continue
+                if (typeof fn.description === "string") {
+                  fn.description = truncateDescription(fn.description, MAX_TOOL_DESCRIPTION_LENGTH)
+                }
+                const parameters = fn.parameters
+                if (parameters) {
+                  clampToolSchemaRepetitions(parameters)
+                  truncateToolDescriptions(parameters)
+                }
+              }
+              args.tools = filterLocalTools(tools, Array.isArray(args.messages) ? args.messages : [])
+            }
+            return args
+          }
+        }
 
         const key = Hash.fast(
           JSON.stringify({
