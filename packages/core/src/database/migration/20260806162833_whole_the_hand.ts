@@ -1,12 +1,15 @@
 import { Effect } from "effect"
 import type { DatabaseMigration } from "../migration"
 
+// Idempotent on purpose: databases migrated by the previous fork schema already
+// have the `task` table under a different migration id, so guards prevent a
+// collision on upgrade while fresh installs still create it.
 export default {
   id: "20260806162833_whole_the_hand",
   up(tx) {
     return Effect.gen(function* () {
       yield* tx.run(`
-        CREATE TABLE \`task\` (
+        CREATE TABLE IF NOT EXISTS \`task\` (
           \`id\` text PRIMARY KEY,
           \`session_id\` text NOT NULL,
           \`parent_id\` text,
@@ -29,9 +32,9 @@ export default {
           CONSTRAINT \`fk_task_session_id_session_id_fk\` FOREIGN KEY (\`session_id\`) REFERENCES \`session\`(\`id\`) ON DELETE CASCADE
         );
       `)
-      yield* tx.run(`CREATE INDEX \`task_session_idx\` ON \`task\` (\`session_id\`);`)
-      yield* tx.run(`CREATE INDEX \`task_parent_idx\` ON \`task\` (\`parent_id\`);`)
-      yield* tx.run(`CREATE INDEX \`task_status_idx\` ON \`task\` (\`status\`);`)
+      yield* tx.run(`CREATE INDEX IF NOT EXISTS \`task_session_idx\` ON \`task\` (\`session_id\`);`)
+      yield* tx.run(`CREATE INDEX IF NOT EXISTS \`task_parent_idx\` ON \`task\` (\`parent_id\`);`)
+      yield* tx.run(`CREATE INDEX IF NOT EXISTS \`task_status_idx\` ON \`task\` (\`status\`);`)
     })
   },
 } satisfies DatabaseMigration.Migration
