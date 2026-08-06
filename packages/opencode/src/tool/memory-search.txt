@@ -1,0 +1,6 @@
+# memory-search
+
+Search across past conversations for relevant context.
+
+Use this when you need to recall information from earlier sessions.
+For the most complete memory, connect synapsis as an MCP server.
