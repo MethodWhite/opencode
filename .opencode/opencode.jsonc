@@ -37,6 +37,19 @@
             "modelPath": "/home/methodwhite/Proyectos/ai-ml/models/llm/gemma-4-E4B-it-OBLITERATED-Q4_K_M.gguf",
             "contextLength": 65536
           }
+        },
+        "Qwen3.5-9B-Abliterated.Q4_K_M.gguf": {
+          "name": "Qwen 3.5 9B Abliterated (local, uncensored)",
+          "limit": {
+            "context": 32768,
+            "output": 8192
+          },
+          "options": {
+            "baseURL": "http://127.0.0.1:8083/v1",
+            "port": 8083,
+            "modelPath": "/home/methodwhite/.cache/models/gguf/Qwen3.5-9B-Abliterated.Q4_K_M.gguf",
+            "contextLength": 32768
+          }
         }
       }
     }
