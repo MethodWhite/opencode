@@ -381,6 +381,12 @@ function custom(dep: CustomDep, llama: LlamaManager): Record<string, CustomLoade
               port,
               contextLength,
               binaryPath: merged["binaryPath"] ? String(merged["binaryPath"]) : undefined,
+              flashAttention: merged["flashAttention"] === true ? true : merged["flashAttention"] === false ? false : undefined,
+              fit: merged["fit"] === true ? true : merged["fit"] === false ? false : undefined,
+              fitTargetMiB: Number.isFinite(Number(merged["fitTargetMiB"]))
+                ? Number(merged["fitTargetMiB"])
+                : undefined,
+              reasoning: merged["reasoning"] === true ? true : merged["reasoning"] === false ? false : undefined,
             })
           }
           return sdk.languageModel(modelID)
