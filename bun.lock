@@ -43,6 +43,7 @@
         "@opencode-ai/sdk": "workspace:*",
         "@opencode-ai/session-ui": "workspace:*",
         "@opencode-ai/ui": "workspace:*",
+        "@opencode-ai/util": "workspace:*",
         "@pierre/trees": "1.0.0-beta.4",
         "@sentry/solid": "catalog:",
         "@shikijs/transformers": "3.9.2",
@@ -146,6 +147,7 @@
       "name": "@opencode-ai/codemode",
       "version": "1.18.18",
       "dependencies": {
+        "@opencode-ai/util": "workspace:*",
         "acorn": "8.15.0",
         "effect": "catalog:",
         "typescript": "catalog:",
@@ -515,6 +517,7 @@
       "dependencies": {
         "@effect/platform-node": "4.0.0-beta.83",
         "@effect/platform-node-shared": "4.0.0-beta.83",
+        "@opencode-ai/util": "workspace:*",
       },
       "devDependencies": {
         "@tsconfig/node22": "catalog:",
