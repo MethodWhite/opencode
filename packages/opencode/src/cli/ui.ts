@@ -11,21 +11,31 @@ const wordmark = [
 
 export class CancelledError extends Schema.TaggedErrorClass<CancelledError>()("UICancelledError", {}) {}
 
+// Color is disabled when NO_COLOR is set (https://no-color.org), FORCE_COLOR
+// is explicitly "0", or neither stdout nor stderr is a TTY.
+function colorEnabled(): boolean {
+  if (process.env.FORCE_COLOR !== undefined) return process.env.FORCE_COLOR !== "0"
+  if (process.env.NO_COLOR !== undefined) return false
+  return process.stdout.isTTY || process.stderr.isTTY
+}
+
+const COLOR = colorEnabled()
+
 export const Style = {
-  TEXT_HIGHLIGHT: "\x1b[96m",
-  TEXT_HIGHLIGHT_BOLD: "\x1b[96m\x1b[1m",
-  TEXT_DIM: "\x1b[90m",
-  TEXT_DIM_BOLD: "\x1b[90m\x1b[1m",
-  TEXT_NORMAL: "\x1b[0m",
-  TEXT_NORMAL_BOLD: "\x1b[1m",
-  TEXT_WARNING: "\x1b[93m",
-  TEXT_WARNING_BOLD: "\x1b[93m\x1b[1m",
-  TEXT_DANGER: "\x1b[91m",
-  TEXT_DANGER_BOLD: "\x1b[91m\x1b[1m",
-  TEXT_SUCCESS: "\x1b[92m",
-  TEXT_SUCCESS_BOLD: "\x1b[92m\x1b[1m",
-  TEXT_INFO: "\x1b[94m",
-  TEXT_INFO_BOLD: "\x1b[94m\x1b[1m",
+  TEXT_HIGHLIGHT: COLOR ? "\x1b[96m" : "",
+  TEXT_HIGHLIGHT_BOLD: COLOR ? "\x1b[96m\x1b[1m" : "",
+  TEXT_DIM: COLOR ? "\x1b[90m" : "",
+  TEXT_DIM_BOLD: COLOR ? "\x1b[90m\x1b[1m" : "",
+  TEXT_NORMAL: COLOR ? "\x1b[0m" : "",
+  TEXT_NORMAL_BOLD: COLOR ? "\x1b[1m" : "",
+  TEXT_WARNING: COLOR ? "\x1b[93m" : "",
+  TEXT_WARNING_BOLD: COLOR ? "\x1b[93m\x1b[1m" : "",
+  TEXT_DANGER: COLOR ? "\x1b[91m" : "",
+  TEXT_DANGER_BOLD: COLOR ? "\x1b[91m\x1b[1m" : "",
+  TEXT_SUCCESS: COLOR ? "\x1b[92m" : "",
+  TEXT_SUCCESS_BOLD: COLOR ? "\x1b[92m\x1b[1m" : "",
+  TEXT_INFO: COLOR ? "\x1b[94m" : "",
+  TEXT_INFO_BOLD: COLOR ? "\x1b[94m\x1b[1m" : "",
 }
 
 export function println(...message: string[]) {
@@ -46,7 +56,7 @@ export function empty() {
 }
 
 export function logo(pad?: string) {
-  if (!process.stdout.isTTY && !process.stderr.isTTY) {
+  if (!COLOR) {
     const result = []
     for (const row of wordmark) {
       if (pad) result.push(pad)
