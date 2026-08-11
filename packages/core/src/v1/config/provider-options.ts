@@ -1,5 +1,7 @@
 export * as ConfigProviderOptionsV1 from "./provider-options"
 
+import { isRecord } from "@opencode-ai/util/record"
+
 type Options = Readonly<Record<string, unknown>>
 
 export interface ProviderResult {
@@ -220,8 +222,4 @@ function string(input: unknown) {
 
 function bearer(input: unknown) {
   return typeof input === "string" && input ? `Bearer ${input}` : undefined
-}
-
-function isRecord(input: unknown): input is Record<string, unknown> {
-  return typeof input === "object" && input !== null && !Array.isArray(input)
 }
