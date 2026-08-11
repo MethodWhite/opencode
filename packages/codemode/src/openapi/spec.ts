@@ -1,4 +1,5 @@
 import { fromSchemaOpenApi3_0, fromSchemaOpenApi3_1 } from "effect/JsonSchema"
+import { isRecord } from "@opencode-ai/util/record"
 import type { JsonSchema } from "../tool.js"
 import { isBlockedMember } from "../tool-runtime.js"
 import type {
@@ -15,8 +16,7 @@ export const methods = new Set(["get", "put", "post", "delete", "options", "head
 const parameterLocations = ["path", "query", "header"] as const
 const ignoredHeaderParameters = new Set(["accept", "content-type", "authorization"])
 
-export const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value)
+export { isRecord }
 
 const asArray = (value: unknown): ReadonlyArray<unknown> => (Array.isArray(value) ? value : [])
 
