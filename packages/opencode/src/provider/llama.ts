@@ -165,13 +165,23 @@ export class LlamaManager {
     if (!worker) return
     this.workers.delete(modelID)
     if (!worker.proc) return
-    if (worker.proc.pid) {
-      try {
-        process.kill(worker.proc.pid, "SIGTERM")
-      } catch {
-        // already gone
-      }
+    const pid = worker.proc.pid
+    if (!pid) return
+    // Graceful shutdown: SIGTERM first, then SIGKILL if the worker does not
+    // exit within a short window, so llama-server never lingers as a zombie
+    // holding its port.
+    try {
+      process.kill(pid, "SIGTERM")
+    } catch {
+      return // already gone
     }
+    setTimeout(() => {
+      try {
+        process.kill(pid, "SIGKILL")
+      } catch {
+        // already exited
+      }
+    }, 3_000)
   }
 
   stop(modelID: string) {
