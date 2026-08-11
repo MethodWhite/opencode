@@ -12,6 +12,10 @@ export interface LlamaWorkerConfig {
   binaryPath?: string
   /** Layers to offload to the GPU via -ngl. Omit to run on CPU only. */
   gpuLayers?: number
+  flashAttention?: boolean
+  fit?: boolean
+  fitTargetMiB?: number
+  reasoning?: boolean
 }
 
 interface Worker {
@@ -113,12 +117,20 @@ export class LlamaManager {
     if (config.gpuLayers !== undefined) {
       args.push("-ngl", String(config.gpuLayers))
     }
+    if (config.flashAttention !== undefined) args.push("--flash-attn", config.flashAttention ? "on" : "off")
+    if (config.fit !== undefined) args.push("--fit", config.fit ? "on" : "off")
+    if (config.fitTargetMiB !== undefined) args.push("--fit-target", String(config.fitTargetMiB))
+    if (config.reasoning !== undefined) args.push("--reasoning", config.reasoning ? "on" : "off")
 
     const fd = fs.openSync(logPath(config.port), "a")
     const proc = Process.spawn([binary, ...args], { stdin: "ignore", stdout: fd, stderr: fd })
     this.workers.set(config.modelID, { port: config.port, proc })
 
     const deadline = Date.now() + HEALTH_TIMEOUT_MS
+    const exited = proc.exited.then(
+      () => true,
+      () => true,
+    )
     while (Date.now() < deadline) {
       if (proc.exitCode !== null || proc.signalCode !== null) {
         // Our spawn failed (e.g. the port was already bound), but a healthy
@@ -136,7 +148,12 @@ export class LlamaManager {
       if (await this.isHealthy(config.port)) {
         if (await this.serves(config.port, config.modelPath)) return
       }
-      await new Promise((resolve) => setTimeout(resolve, HEALTH_POLL_MS))
+      // Fail fast if the spawned process died (e.g. missing binary) instead of
+      // polling until HEALTH_TIMEOUT_MS.
+      if (await Promise.race([exited, new Promise((resolve) => setTimeout(resolve, HEALTH_POLL_MS))])) {
+        this.workers.delete(config.modelID)
+        throw new Error(`llama-server exited before becoming healthy. Logs: ${logPath(config.port)}`)
+      }
     }
 
     this.kill(config.modelID)
