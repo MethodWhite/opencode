@@ -27,6 +27,12 @@
 - Do not translate from model knowledge alone. Verify terminology and grammar with Unicode CLDR locale/plural data, Microsoft Localization Style Guides and terminology, Apple localization/style guidance and localized platform UI, Mozilla localization style guides, Mozilla Pontoon, and the Firefox localization corpus at `github.com/mozilla-l10n/firefox-l10n`.
 - Also use the relevant language authority or official dictionary for the locale (for example RAE/Fundéu, FranceTerme, Duden, TDK, Kotus/Kielitoimiston sanakirja, Språkrådet/Bokmålsordboka, Rada Języka Polskiego/PWN, the Russian and Arabic language academies, the Ukrainian Orthography, Taiwan MOE dictionaries, or the Royal Society of Thailand). Treat the English dictionary as the semantic source of truth and preserve placeholders, code identifiers, product names, and keyboard labels.
 
+## i18n parity test
+
+- `src/i18n/parity.test.ts` checks that every non-English locale has every English key and the required plural variants. It runs only outside CI (`describe.skipIf(!!process.env.CI)`), so it is a local convenience check, not a gate.
+- A parity failure means `en.ts` has keys a locale has not translated yet (or vice versa). To fix it, add the missing keys to the locale dictionaries with verified translations — do not edit or drop English keys.
+- When a new visible string is added, add its key to `en.ts` and to every locale in the `appLocales`/`desktopLocales` arrays at the same time, otherwise parity fails locally.
+
 ## Tool Calling
 
 - ALWAYS USE PARALLEL TOOLS WHEN APPLICABLE.

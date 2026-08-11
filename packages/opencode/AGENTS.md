@@ -69,6 +69,14 @@ import { SessionStatus } from "@/session/status"
 Barrels in multi-sibling directories force every import through the barrel to
 evaluate every sibling, which defeats tree-shaking and slows module load.
 
+## Shared utilities
+
+Generic cross-package helpers live in `@opencode-ai/util` (for example
+`isRecord` in `@opencode-ai/util/record`); `src/util/*` re-exports from there
+rather than keeping a second copy. When a local helper is identical to one in
+`@opencode-ai/util`, import it from the package instead of duplicating. Keep a
+local copy only when its behaviour or typing differs, and say so.
+
 # opencode Effect rules
 
 Use these rules when writing or migrating Effect code.
