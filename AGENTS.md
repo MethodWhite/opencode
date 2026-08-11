@@ -63,6 +63,13 @@ const { a, b } = obj
 - If a namespace-style value is needed, import the module's own exported namespace by name, for example `import { Project } from "@opencode-ai/core/project"`, then reference `Project.ID`.
 - Prefer dynamic imports for heavy modules that are only needed in selected code paths, especially in startup-sensitive entrypoints. Destructure dynamic import bindings near the top of the narrowest scope that needs them so they read like normal imports. Avoid inline chains such as `await import("./module").then((mod) => mod.value())` or `(await import("./module")).value()`. Keep branch-specific imports inside the branch that needs them to preserve lazy loading.
 
+### Shared utilities
+
+- Put cross-package utility helpers (plain record narrowing, shared errors, etc.) in `packages/util` (`@opencode-ai/util`) and re-export from there. `@opencode-ai/util` is low-level and must stay dependency-free so any package can consume it without cycles.
+- When adding a generic helper, prefer `@opencode-ai/util` over a new per-package copy; when you find an identical local implementation of an existing util, point it at `@opencode-ai/util` instead of duplicating.
+- Only keep a local copy when its behaviour or typing genuinely differs (for example a narrowing that does not exclude arrays) — then note the difference so it is not "consolidated" away by mistake.
+- Respect the dependency direction: low-level packages (`schema`, `util`, `llm`) must never depend on high-level ones (`tui`, `app`, `desktop`). Re-exporting from a lower-level package into a higher-level one is fine; the reverse is not.
+
 ### Variables
 
 Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
