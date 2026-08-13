@@ -13,6 +13,7 @@ import BUILD_SWITCH from "./prompt/build-switch.txt"
 import PLAN_MODE from "./prompt/plan-mode.txt"
 import COMPOSE_MODE from "./prompt/compose-mode.txt"
 import AUTO_MODE from "./prompt/auto-mode.txt"
+import YOLO_MODE from "./prompt/yolo-mode.txt"
 
 export const apply = Effect.fn("SessionReminders.apply")(function* (input: {
   messages: SessionV1.WithParts[]
@@ -48,6 +49,19 @@ export const apply = Effect.fn("SessionReminders.apply")(function* (input: {
       sessionID: userMessage.info.sessionID,
       type: "text",
       text: AUTO_MODE,
+      synthetic: true,
+    })
+    return input.messages
+  }
+
+  if (input.agent.name === "yolo") {
+    if (hasReminder(userMessage, YOLO_MODE)) return input.messages
+    userMessage.parts.push({
+      id: PartID.ascending(),
+      messageID: userMessage.info.id,
+      sessionID: userMessage.info.sessionID,
+      type: "text",
+      text: YOLO_MODE,
       synthetic: true,
     })
     return input.messages

@@ -4,7 +4,21 @@ import DESCRIPTION_WRITE from "./todowrite.txt"
 import { Todo } from "../session/todo"
 
 export const Parameters = Schema.Struct({
-  todos: Schema.mutable(Schema.Array(Todo.Info)).annotate({ description: "The updated todo list" }),
+  todos: Schema.optional(Schema.mutable(Schema.Array(Todo.Info))).annotate({
+    description: "The full updated todo list (replaces the current list)",
+  }),
+  add: Schema.optional(Schema.mutable(Schema.Array(
+    Schema.Struct({
+      content: Schema.String.annotate({ description: "New task to append" }),
+      priority: Schema.optional(Schema.String).annotate({ description: "high | medium | low" }),
+    }),
+  ))).annotate({ description: "Append new tasks without rewriting the list" }),
+  complete: Schema.optional(Schema.mutable(Schema.Array(Schema.String))).annotate({
+    description: "Mark tasks as completed by exact content",
+  }),
+  remove: Schema.optional(Schema.mutable(Schema.Array(Schema.String))).annotate({
+    description: "Remove tasks by exact content",
+  }),
 })
 
 type Metadata = {
@@ -28,16 +42,44 @@ export const TodoWriteTool = Tool.define<typeof Parameters, Metadata, Todo.Servi
             metadata: {},
           })
 
+          let next: Todo.Info[]
+          if (params.todos) {
+            // Reemplazo completo (comportamiento original)
+            next = params.todos
+          } else {
+            // Ops granulares sobre la lista actual: manejo más fino de tareas.
+            const current = yield* todo.get(ctx.sessionID)
+            next = current.map((t) => ({ ...t }))
+            for (const item of params.add ?? []) {
+              next.push({
+                content: item.content,
+                status: "pending",
+                priority: item.priority ?? "medium",
+              })
+            }
+            for (const content of params.complete ?? []) {
+              next = next.map((t) =>
+                t.content === content ? { ...t, status: "completed" } : t,
+              )
+            }
+            for (const content of params.remove ?? []) {
+              next = next.filter((t) => t.content !== content)
+            }
+          }
+
           yield* todo.update({
             sessionID: ctx.sessionID,
-            todos: params.todos,
+            todos: next,
           })
 
+          const done = next.filter((t) => t.status === "completed").length
+          const active = next.filter((t) => t.status !== "completed" && t.status !== "cancelled").length
+
           return {
-            title: `${params.todos.filter((x) => x.status !== "completed").length} todos`,
-            output: JSON.stringify(params.todos, null, 2),
+            title: `${done}/${next.length} done · ${active} active`,
+            output: JSON.stringify(next, null, 2),
             metadata: {
-              todos: params.todos,
+              todos: next,
             },
           }
         }),

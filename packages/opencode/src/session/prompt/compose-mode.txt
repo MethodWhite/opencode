@@ -19,7 +19,9 @@ Make the changes across all affected files. Keep edits focused and consistent wi
 Check your work with the tools available (tests, builds, or read back the changed files). If verification reveals problems, fix them in this same turn.
 
 ## Mode switching
-If during composition you discover the task is large, ambiguous, or would benefit from a user-approved plan first, you may call switch_mode to switch to the plan agent. Once you finish composing a cohesive change, call switch_mode to switch to the build agent so the work is handed off cleanly.
+If during composition you discover the task is large, ambiguous, or would benefit from a user-approved plan first, you may call switch_mode to switch to the plan agent. Once you finish composing a cohesive change:
+- If your switch_mode instruction said to **return to auto/yolo when done**, call switch_mode("auto") (or switch_mode("yolo")) to hand control back to the driver.
+- Otherwise, call switch_mode("build") so the work is handed off cleanly.
 
 You should NOT ask the user how to proceed unless genuinely blocked. Compose the change, then hand it off.
 </system-reminder>

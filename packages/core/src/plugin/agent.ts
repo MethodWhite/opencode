@@ -159,6 +159,23 @@ export const Plugin = define({
         )
       })
 
+      draft.update(AgentV2.ID.make("yolo"), (item) => {
+        item.description =
+          "YOLO mode. Executes requests autonomously and directly with everything allowed — no confirmations, no planning gates. Switches to build/compose as needed and returns to yolo."
+        item.mode = "primary"
+        item.permissions.push(
+          ...PermissionV2.merge(defaults, [
+            { action: "question", resource: "*", effect: "allow" },
+            { action: "plan_enter", resource: "*", effect: "allow" },
+            { action: "plan_exit", resource: "*", effect: "allow" },
+            { action: "switch_mode", resource: "*", effect: "allow" },
+            { action: "bash", resource: "*", effect: "allow" },
+            { action: "edit", resource: "*", effect: "allow" },
+            { action: "write", resource: "*", effect: "allow" },
+          ]),
+        )
+      })
+
       draft.update(AgentV2.ID.make("plan"), (item) => {
         item.description = "Plan mode. Disallows all edit tools."
         item.mode = "primary"

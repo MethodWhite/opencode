@@ -156,6 +156,28 @@ const layer = Layer.effect(
             native: true,
             color: "primary",
           },
+          yolo: {
+            name: "yolo",
+            description:
+              "YOLO mode. Executes requests autonomously and directly with everything allowed — no confirmations, no planning gates. Switches to build/compose as needed and returns to yolo.",
+            options: {},
+            permission: Permission.merge(
+              defaults,
+              Permission.fromConfig({
+                question: "allow",
+                plan_enter: "allow",
+                plan_exit: "allow",
+                switch_mode: "allow",
+                bash: "allow",
+                edit: "allow",
+                write: "allow",
+              }),
+              user,
+            ),
+            mode: "primary",
+            native: true,
+            color: "red",
+          },
           plan: {
             name: "plan",
             description: "Plan mode. Disallows all edit tools.",

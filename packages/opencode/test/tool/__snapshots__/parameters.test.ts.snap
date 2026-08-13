@@ -313,6 +313,15 @@ exports[`tool parameters JSON Schema (wire shape) task 1`] = `
       "description": "A short (3-5 words) description of the task",
       "type": "string",
     },
+    "priority": {
+      "description": "Priority level for this task (high, medium, low)",
+      "enum": [
+        "high",
+        "medium",
+        "low",
+      ],
+      "type": "string",
+    },
     "prompt": {
       "description": "The task for the agent to perform",
       "type": "string",
@@ -320,6 +329,13 @@ exports[`tool parameters JSON Schema (wire shape) task 1`] = `
     "subagent_type": {
       "description": "The type of specialized agent to use for this task",
       "type": "string",
+    },
+    "tags": {
+      "description": "Tags for categorizing this task",
+      "items": {
+        "type": "string",
+      },
+      "type": "array",
     },
     "task_id": {
       "description": "This should only be set if you mean to resume a previous task (you can pass a prior task_id and the task will continue the same subagent session as before instead of creating a fresh one)",
@@ -339,8 +355,42 @@ exports[`tool parameters JSON Schema (wire shape) todo 1`] = `
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
+    "add": {
+      "description": "Append new tasks without rewriting the list",
+      "items": {
+        "properties": {
+          "content": {
+            "description": "New task to append",
+            "type": "string",
+          },
+          "priority": {
+            "description": "high | medium | low",
+            "type": "string",
+          },
+        },
+        "required": [
+          "content",
+        ],
+        "type": "object",
+      },
+      "type": "array",
+    },
+    "complete": {
+      "description": "Mark tasks as completed by exact content",
+      "items": {
+        "type": "string",
+      },
+      "type": "array",
+    },
+    "remove": {
+      "description": "Remove tasks by exact content",
+      "items": {
+        "type": "string",
+      },
+      "type": "array",
+    },
     "todos": {
-      "description": "The updated todo list",
+      "description": "The full updated todo list (replaces the current list)",
       "items": {
         "properties": {
           "content": {
@@ -366,9 +416,6 @@ exports[`tool parameters JSON Schema (wire shape) todo 1`] = `
       "type": "array",
     },
   },
-  "required": [
-    "todos",
-  ],
   "type": "object",
 }
 `;

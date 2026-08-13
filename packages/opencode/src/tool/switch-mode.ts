@@ -7,7 +7,7 @@ import { MessageID, PartID } from "../session/schema"
 import SWITCH_MODE_DESCRIPTION from "./switch-mode.txt"
 
 export const Parameters = Schema.Struct({
-  mode: Schema.Literals(["plan", "compose", "build"]),
+  mode: Schema.Literals(["plan", "compose", "build", "auto", "yolo"]),
   reason: Schema.optional(Schema.String),
   instruction: Schema.optional(Schema.String),
 })
@@ -23,7 +23,7 @@ export const SwitchModeTool = Tool.define(
       parameters: Parameters,
       execute: (
         params: {
-          mode: "plan" | "compose" | "build"
+          mode: "plan" | "compose" | "build" | "auto" | "yolo"
           reason?: string
           instruction?: string
         },
