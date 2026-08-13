@@ -100,6 +100,7 @@ export const Info = Schema.Struct({
         build: Schema.optional(ConfigAgentV1.Info),
         compose: Schema.optional(ConfigAgentV1.Info),
         auto: Schema.optional(ConfigAgentV1.Info),
+        yolo: Schema.optional(ConfigAgentV1.Info),
         general: Schema.optional(ConfigAgentV1.Info),
         explore: Schema.optional(ConfigAgentV1.Info),
         title: Schema.optional(ConfigAgentV1.Info),

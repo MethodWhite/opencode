@@ -216,9 +216,7 @@ const aggregateSessionStats = Effect.fn("Cli.stats.aggregate")(function* (
           sessionTotalTokens:
             sessionTokens.input +
             sessionTokens.output +
-            sessionTokens.reasoning +
-            sessionTokens.cache.read +
-            sessionTokens.cache.write,
+            sessionTokens.reasoning,
           sessionToolUsage,
           sessionModelUsage,
           earliestTime: cutoffTime > 0 ? session.time.updated : session.time.created,
@@ -273,9 +271,7 @@ const aggregateSessionStats = Effect.fn("Cli.stats.aggregate")(function* (
   const totalTokens =
     stats.totalTokens.input +
     stats.totalTokens.output +
-    stats.totalTokens.reasoning +
-    stats.totalTokens.cache.read +
-    stats.totalTokens.cache.write
+    stats.totalTokens.reasoning
   stats.tokensPerSession = filteredSessions.length > 0 ? totalTokens / filteredSessions.length : 0
   sessionTotalTokens.sort((a, b) => a - b)
   const mid = Math.floor(sessionTotalTokens.length / 2)

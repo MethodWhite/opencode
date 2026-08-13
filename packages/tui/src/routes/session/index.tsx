@@ -2521,13 +2521,23 @@ function ApplyPatch(props: ToolProps) {
 }
 
 function TodoWrite(props: ToolProps) {
+  const { theme } = useTheme()
   const todos = createMemo(() => parseTodos(props.input.todos))
+  const done = createMemo(() => todos().filter((t) => t.status === "completed").length)
+  const active = createMemo(() => todos().filter((t) => t.status !== "completed" && t.status !== "cancelled").length)
   return (
     <Switch>
       <Match when={parseTodos(props.metadata.todos).length}>
         <BlockTool title="# Todos" part={props.part}>
           <box>
-            <For each={todos()}>{(todo) => <TodoItem status={todo.status} content={todo.content} />}</For>
+            <box flexDirection="row" gap={1} marginBottom={1}>
+              <text style={{ fg: theme.success }}>✓ {done()}</text>
+              <text style={{ fg: theme.textMuted }}>/ {todos().length}</text>
+              {active() > 0 ? <text style={{ fg: theme.warning }}>· {active()} en curso</text> : undefined}
+            </box>
+            <For each={todos()}>
+              {(todo) => <TodoItem status={todo.status} content={todo.content} priority={todo.priority} />}
+            </For>
           </box>
         </BlockTool>
       </Match>
@@ -2680,7 +2690,8 @@ export function parseTodos(value: unknown) {
     const todo = recordValue(item)
     const status = stringValue(todo?.status)
     const content = stringValue(todo?.content)
-    return status && content ? [{ status, content }] : []
+    const priority = stringValue(todo?.priority)
+    return status && content ? [{ status, content, priority }] : []
   })
 }
 

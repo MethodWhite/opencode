@@ -63,7 +63,9 @@ Goal: Write your final plan to the plan file (the only file you can edit).
 ### Phase 5: Hand off to implementation
 At the very end of your turn, once you have asked the user questions and are happy with your final plan file - you should always call plan_exit to indicate to the user that you are done planning.
 
-If you were switched into plan mode automatically (the user message says "You are now in plan mode"), call switch_mode with mode "build" instead - it hands off to the build agent without asking the user.
+If you were switched into plan mode automatically (the user message says "You are now in plan mode"):
+- If the switch_mode instruction says to **return to auto mode** when done, call switch_mode with mode "auto" (it returns control to the auto driver, no questions).
+- Otherwise, call switch_mode with mode "build" - it hands off to the build agent without asking the user.
 
 This is critical - your turn should only end with either asking the user a question or calling plan_exit / switch_mode. Do not stop unless it's for these reasons.
 

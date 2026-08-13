@@ -253,10 +253,18 @@ describe("tool parameters", () => {
       const parsed = parse(Todo, {
         todos: [{ id: "t1", content: "do x", status: "pending", priority: "medium" }],
       })
-      expect(parsed.todos.length).toBe(1)
+      expect(parsed.todos?.length).toBe(1)
     })
-    test("rejects missing todos", () => {
-      expect(accepts(Todo, {})).toBe(false)
+    test("accepts granular ops without full list", () => {
+      const parsed = parse(Todo, { add: [{ content: "new task" }], complete: ["old task"] })
+      expect(parsed.add?.length).toBe(1)
+      expect(parsed.complete).toEqual(["old task"])
+      expect(parsed.todos).toBeUndefined()
+    })
+    test("accepts complete/remove string arrays", () => {
+      const parsed = parse(Todo, { complete: ["a"], remove: ["b"] })
+      expect(parsed.complete).toEqual(["a"])
+      expect(parsed.remove).toEqual(["b"])
     })
   })
 

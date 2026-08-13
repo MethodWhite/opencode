@@ -29,6 +29,14 @@ Skip when:
 - Preserve user-provided commands verbatim (flags, args, order)
 - Items should be specific and actionable; break large work into smaller steps
 
+## Granular ops (without rewriting the whole list)
+Instead of resending the full `todos` array every time, you can:
+- `add: [{ content, priority? }]` — append new tasks (keeps existing ones)
+- `complete: ["exact content"]` — mark items done
+- `remove: ["exact content"]` — delete items
+
+Use these to keep churn low: add a new todo, mark one complete, or drop one that is no longer needed — the rest of the list is preserved automatically.
+
 ## Examples
 
 Use it:

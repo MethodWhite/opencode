@@ -85,6 +85,20 @@ for (const item of targets) {
     if (await Bun.file(lib).exists()) opentuiLibPath = lib
   }
 
+  // compile.files es soportado por bun 1.3.14 en runtime; los types no lo tipan,
+  // así que se deja sin anotación para evitar el excess-property check.
+  const compile = {
+    autoloadBunfig: false,
+    autoloadDotenv: false,
+    autoloadTsconfig: true,
+    autoloadPackageJson: true,
+    target: target.replace(binary, "bun") as Bun.Build.CompileTarget,
+    outfile: `./dist/${name}/bin/${binary}`,
+    execArgv: [`--user-agent=${binary}/${Script.version}`, "--use-system-ca", "--"],
+    windows: {},
+    files: opentuiLibPath ? { "libopentui-h3hyjpa5.so": opentuiLibPath } : {},
+  }
+
   const result = await Bun.build({
     entrypoints: ["./src/index.ts"],
     tsconfig: "./tsconfig.json",
@@ -94,17 +108,7 @@ for (const item of targets) {
     minify: true,
     sourcemap: sourcemapsFlag ? "linked" : "none",
     splitting: true,
-    compile: {
-      autoloadBunfig: false,
-      autoloadDotenv: false,
-      autoloadTsconfig: true,
-      autoloadPackageJson: true,
-      target: target.replace(binary, "bun") as Bun.Build.CompileTarget,
-      outfile: `./dist/${name}/bin/${binary}`,
-      execArgv: [`--user-agent=${binary}/${Script.version}`, "--use-system-ca", "--"],
-      windows: {},
-      files: opentuiLibPath ? { "libopentui-h3hyjpa5.so": opentuiLibPath } : {},
-    },
+    compile,
     define: {
       OPENCODE_VERSION: `'${Script.version}'`,
       OPENCODE_CLI_NAME: `'${binary}'`,
