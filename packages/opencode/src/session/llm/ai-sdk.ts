@@ -49,6 +49,7 @@ function usage(value: unknown) {
     totalTokens?: number
     reasoningTokens?: number
     cachedInputTokens?: number
+    cacheCreationInputTokens?: number
     inputTokenDetails?: { cacheReadTokens?: number; cacheWriteTokens?: number }
     outputTokenDetails?: { reasoningTokens?: number }
   }
@@ -58,7 +59,8 @@ function usage(value: unknown) {
     totalTokens: item.totalTokens,
     reasoningTokens: item.outputTokenDetails?.reasoningTokens ?? item.reasoningTokens,
     cacheReadInputTokens: item.inputTokenDetails?.cacheReadTokens ?? item.cachedInputTokens,
-    cacheWriteInputTokens: item.inputTokenDetails?.cacheWriteTokens,
+    cacheWriteInputTokens:
+      item.inputTokenDetails?.cacheWriteTokens ?? item.cacheCreationInputTokens,
   }).filter((entry) => entry[1] !== undefined)
   return entries.length === 0 ? undefined : Object.fromEntries(entries)
 }

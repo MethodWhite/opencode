@@ -373,7 +373,7 @@ function custom(dep: CustomDep, llama: LlamaManager): Record<string, CustomLoade
               }
               port = Number.isInteger(parsed) && parsed > 0 ? parsed : 8080
             }
-            const rawCtx = Number(merged["contextLength"])
+            const rawCtx = Number(merged["contextLength"] ?? model?.limit?.context)
             const contextLength = Number.isFinite(rawCtx) && rawCtx > 0 ? rawCtx : undefined
             await llama.ensure({
               modelID,
@@ -387,6 +387,9 @@ function custom(dep: CustomDep, llama: LlamaManager): Record<string, CustomLoade
                 ? Number(merged["fitTargetMiB"])
                 : undefined,
               reasoning: merged["reasoning"] === true ? true : merged["reasoning"] === false ? false : undefined,
+              kvCacheQuantized: merged["kvCacheQuantized"] === false ? false : true,
+              threads: Number.isFinite(Number(merged["threads"])) ? Number(merged["threads"]) : undefined,
+              slots: Number.isFinite(Number(merged["slots"])) ? Number(merged["slots"]) : 1,
             })
           }
           return sdk.languageModel(modelID)

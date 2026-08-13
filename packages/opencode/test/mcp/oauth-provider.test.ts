@@ -1,10 +1,26 @@
 import { test, expect, describe } from "bun:test"
-import { determineScope } from "@modelcontextprotocol/sdk/client/auth.js"
 import { McpOAuthProvider, OAUTH_CALLBACK_PORT, OAUTH_CALLBACK_PATH } from "../../src/mcp/oauth-provider"
 import type { McpAuth } from "../../src/mcp/auth"
 
 // Stub auth — only synchronous getters are exercised in these tests
 const stubAuth = {} as McpAuth.Interface
+
+// The MCP SDK stopped exporting determineScope (v1.29+); keep the scope
+// selection logic local to this test so it mirrors the upstream behaviour:
+// the requested scope is the resource's supported scopes, plus offline_access
+// when the authorization server supports refresh tokens.
+function determineScope(input: {
+  resourceMetadata: { resource: string; scopes_supported?: string[] }
+  authServerMetadata: Record<string, unknown> & { scopes_supported?: string[] }
+  clientMetadata: { scope?: string }
+}): string {
+  const base = input.clientMetadata.scope ?? input.resourceMetadata.scopes_supported ?? []
+  const scopes = new Set(Array.isArray(base) ? base : base.split(/\s+/).filter(Boolean))
+  if (input.authServerMetadata.scopes_supported?.includes("offline_access")) {
+    scopes.add("offline_access")
+  }
+  return [...scopes].join(" ")
+}
 
 const makeProvider = (config: ConstructorParameters<typeof McpOAuthProvider>[2]) =>
   new McpOAuthProvider("test-server", "https://mcp.example.com/mcp", config, { onRedirect: async () => {} }, stubAuth)

@@ -115,6 +115,7 @@ export const Plugin = define({
       { action: "question", resource: "*", effect: "deny" },
       { action: "plan_enter", resource: "*", effect: "deny" },
       { action: "plan_exit", resource: "*", effect: "deny" },
+      { action: "switch_mode", resource: "*", effect: "deny" },
       { action: "read", resource: "*", effect: "allow" },
       { action: "read", resource: "*.env", effect: "ask" },
       { action: "read", resource: "*.env.*", effect: "ask" },
@@ -130,6 +131,34 @@ export const Plugin = define({
           ...PermissionV2.merge(defaults, [
             { action: "question", resource: "*", effect: "allow" },
             { action: "plan_enter", resource: "*", effect: "allow" },
+            { action: "switch_mode", resource: "*", effect: "allow" },
+          ]),
+        )
+      })
+
+      draft.update(AgentV2.ID.make("compose"), (item) => {
+        item.description =
+          "Compose mode. Gathers context and designs the implementation before making multi-file edits. Can use the terminal."
+        item.mode = "primary"
+        item.permissions.push(
+          ...PermissionV2.merge(defaults, [
+            { action: "question", resource: "*", effect: "allow" },
+            { action: "plan_enter", resource: "*", effect: "allow" },
+            { action: "switch_mode", resource: "*", effect: "allow" },
+          ]),
+        )
+      })
+
+      draft.update(AgentV2.ID.make("auto"), (item) => {
+        item.description =
+          "Auto mode. Automatically switches between Plan, Compose, and Build as appropriate for the request without asking the user."
+        item.mode = "primary"
+        item.permissions.push(
+          ...PermissionV2.merge(defaults, [
+            { action: "question", resource: "*", effect: "allow" },
+            { action: "plan_enter", resource: "*", effect: "allow" },
+            { action: "plan_exit", resource: "*", effect: "allow" },
+            { action: "switch_mode", resource: "*", effect: "allow" },
           ]),
         )
       })
@@ -141,6 +170,7 @@ export const Plugin = define({
           ...PermissionV2.merge(defaults, [
             { action: "question", resource: "*", effect: "allow" },
             { action: "plan_exit", resource: "*", effect: "allow" },
+            { action: "switch_mode", resource: "*", effect: "allow" },
             { action: "external_directory", resource: path.join(Global.Path.data, "plans", "*"), effect: "allow" },
             { action: "edit", resource: "*", effect: "deny" },
             { action: "edit", resource: path.join(".opencode", "plans", "*.md"), effect: "allow" },

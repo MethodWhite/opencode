@@ -22,7 +22,7 @@
             "baseURL": "http://127.0.0.1:8081/v1",
             "port": 8081,
             "modelPath": "/home/methodwhite/.cache/models/gguf/qwen2.5-3b-instruct-q4_k_m.gguf",
-            "contextLength": 65536
+            "contextLength": 32768
           }
         },
         "gemma-4-E4B-it-OBLITERATED-Q4_K_M.gguf": {

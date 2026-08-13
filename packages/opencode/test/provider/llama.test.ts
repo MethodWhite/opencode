@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, test } from "bun:test"
 import { createServer, type Server } from "node:http"
 
-import { LlamaManager } from "../../src/provider/llama"
+import { buildLlamaArgs, LlamaManager } from "../../src/provider/llama"
 
 /**
  * A fake llama-server: serves `/health` and `/props` on loopback so the
@@ -82,5 +82,51 @@ describe("LlamaManager", () => {
     // Unhealthy port → the manager tries to spawn; with a bogus binary it
     // must fail rather than silently adopt a dead server.
     await expect(manager.ensure(config)).rejects.toThrow()
+  })
+})
+
+describe("buildLlamaArgs", () => {
+  const base = {
+    modelID: "qwen",
+    modelPath: "/models/qwen.gguf",
+    port: 8080,
+  }
+
+  test("sizes context from the configured limit by default", () => {
+    const args = buildLlamaArgs({ ...base, contextLength: 32768 })
+    expect(args).toContain("-c")
+    expect(args[args.indexOf("-c") + 1]).toBe("32768")
+  })
+
+  test("respects fit without offload so llama.cpp auto-tunes to VRAM", () => {
+    const args = buildLlamaArgs({ ...base, contextLength: 32768, fit: true, fitTargetMiB: 512 })
+    expect(args).toContain("--fit")
+    expect(args[args.indexOf("--fit") + 1]).toBe("on")
+    expect(args).toContain("--fit-target")
+    expect(args[args.indexOf("--fit-target") + 1]).toBe("512")
+    expect(args).not.toContain("-ngl")
+  })
+
+  test("passes an explicit offload when gpuLayers is given", () => {
+    const args = buildLlamaArgs({ ...base, gpuLayers: 24 })
+    expect(args).toContain("-ngl")
+    expect(args[args.indexOf("-ngl") + 1]).toBe("24")
+  })
+
+  test("quantizes the KV cache by default and allows opting out", () => {
+    expect(buildLlamaArgs({ ...base })).toContain("--cache-type-k")
+    const off = buildLlamaArgs({ ...base, kvCacheQuantized: false })
+    expect(off).not.toContain("--cache-type-k")
+  })
+
+  test("defaults to a single slot so the KV cache is not multiplied", () => {
+    expect(buildLlamaArgs({ ...base, slots: 1 })).toContain("-np")
+  })
+
+  test("omits optional memory flags when unset", () => {
+    const args = buildLlamaArgs({ ...base })
+    for (const flag of ["--flash-attn", "--fit", "--reasoning", "-np", "-t"]) {
+      expect(args).not.toContain(flag)
+    }
   })
 })

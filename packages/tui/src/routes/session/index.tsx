@@ -330,6 +330,12 @@ export function Session() {
     } else if (part.tool === "plan_enter") {
       local.agent.set("plan")
       lastSwitch = part.id
+    } else if (part.tool === "switch_mode") {
+      const mode = stringValue(part.state.input?.mode)
+      if (mode) {
+        local.agent.set(mode)
+        lastSwitch = part.id
+      }
     }
   })
 
