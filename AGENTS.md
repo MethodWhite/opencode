@@ -166,3 +166,22 @@ const table = sqliteTable("session", {
 - Keep delivery vocabulary explicit. Prompts steer by default and promote at the next safe provider-turn boundary while the current drain requires continuation. An explicit `queue` input remains pending until the Session would otherwise become idle; promote one queued input at that boundary, then reevaluate continuation before promoting another. Promoting any new user input resets the selected agent's provider-turn allowance; a batch of steers resets it once.
 - Keep EventV2 replay owner claims separate from clustered Session execution ownership.
 - Keep the System Context algebra, registry, and built-ins in `src/system-context`; keep Context Source producers with their observed domains, and keep Session History selection plus Context Epoch persistence Session-owned.
+
+## Fork Diagnostics (opencodeMW) — OBLIGATORIO
+
+- **Antes de cualquier PR/commit de cambios de código**: ejecuta `bun run doctor`
+  (script/fork-doctor.ts). Detecta en tiempo real: deployment de capas
+  (LayerNode "Service not found" silencioso), arranque del TUI worker,
+  typecheck de core/opencode/tui/llm, identidades de servicio duplicadas y
+  lint. Un arranque TUI >5s o colgado es un bug (no "código pesado").
+- **`bun run doctor:ci`** para modo CI (exit != 0 si hay errores del fork).
+- **`bun run doctor:boot`** para solo el test de arranque (rápido).
+- **Errores silenciosos típicos del fork**: servicios con la MISMA identidad
+  `@opencode/...` declarados en 2+ archivos rompen el LayerNode deployment con
+  "Service not found" y cuelgan el arranque sin loggear. Verifica con el doctor
+  la sección "identidades de servicio duplicadas" y evita duplicar identidades
+  entre `packages/core/src/*.ts` y `packages/opencode/src/*`.
+- **No crear archivos `core/skill/index.ts` ni `core/config/config.ts`**:
+  duplican identidades del upstream y fueron la causa del arranque lento.
+- Los errores de lint/typecheck en archivos NO modificados por el fork son
+  preexistentes del upstream → documentar (S-40 §4), no bloquear.
