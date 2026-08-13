@@ -60,7 +60,7 @@ const v2ApiLayer = HttpRouter.serve(
 const noAuthLayer = ServerAuth.Config.configLayer({ password: Option.none(), username: "opencode", pqcPublicKey: Option.none() })
 const secretLayer = ServerAuth.Config.configLayer({ password: Option.some("secret"), username: "opencode", pqcPublicKey: Option.none() })
 const kitSecretLayer = ServerAuth.Config.configLayer({ password: Option.some("secret"), username: "kit", pqcPublicKey: Option.none() })
-const coreSecretLayer = ServerAuthCore.Config.configLayer({ password: Option.some("secret"), username: "opencode" })
+const coreSecretLayer = ServerAuthCore.Config.configLayer({ password: Option.some("secret"), username: "opencode", pqcPublicKey: Option.none() })
 
 const it = testEffect(apiLayer.pipe(Layer.provide(noAuthLayer)))
 const itSecret = testEffect(apiLayer.pipe(Layer.provide(secretLayer)))

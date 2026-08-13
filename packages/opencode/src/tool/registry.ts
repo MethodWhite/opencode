@@ -32,8 +32,6 @@ import { MemorySearchTool } from "./memory-search"
 import { LspTool } from "./lsp"
 import * as Truncate from "./truncate"
 import { ApplyPatchTool } from "./apply_patch"
-import { SequentialThinkingTool } from "./sequential-thinking"
-import { MemorySearchTool } from "./memory-search"
 import { Glob } from "@opencode-ai/core/util/glob"
 import path from "path"
 import { pathToFileURL } from "url"
@@ -228,8 +226,6 @@ const layer = Layer.effect(
           question: Tool.init(question),
           lsp: Tool.init(lsptool),
           plan: Tool.init(plan),
-          seqthink: Tool.init(seqthink),
-          memsearch: Tool.init(memsearch),
           switchMode: Tool.init(switchMode),
           ...(codeModeTool ? { execute: Tool.init(codeModeTool) } : {}),
         })
