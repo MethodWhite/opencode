@@ -126,6 +126,7 @@ const layer = Layer.effect(
           question: "deny",
           plan_enter: "deny",
           plan_exit: "deny",
+          switch_mode: "deny",
           // mirrors github.com/github/gitignore Node.gitignore pattern for .env files
           read: {
             "*": "allow",
@@ -147,11 +148,71 @@ const layer = Layer.effect(
               Permission.fromConfig({
                 question: "allow",
                 plan_enter: "allow",
+                switch_mode: "allow",
               }),
               user,
             ),
             mode: "primary",
             native: true,
+          },
+          compose: {
+            name: "compose",
+            description:
+              "Compose mode. Gathers context and designs the implementation before making multi-file edits. Can use the terminal.",
+            options: {},
+            permission: Permission.merge(
+              defaults,
+              Permission.fromConfig({
+                question: "allow",
+                plan_enter: "allow",
+                switch_mode: "allow",
+              }),
+              user,
+            ),
+            mode: "primary",
+            native: true,
+            color: "accent",
+          },
+          auto: {
+            name: "auto",
+            description:
+              "Auto mode. Automatically switches between Plan, Compose, and Build as appropriate for the request without asking the user.",
+            options: {},
+            permission: Permission.merge(
+              defaults,
+              Permission.fromConfig({
+                question: "allow",
+                plan_enter: "allow",
+                plan_exit: "allow",
+                switch_mode: "allow",
+              }),
+              user,
+            ),
+            mode: "primary",
+            native: true,
+            color: "primary",
+          },
+          yolo: {
+            name: "yolo",
+            description:
+              "YOLO mode. Executes requests autonomously and directly with everything allowed — no confirmations, no planning gates. Switches to build/compose as needed and returns to yolo.",
+            options: {},
+            permission: Permission.merge(
+              defaults,
+              Permission.fromConfig({
+                question: "allow",
+                plan_enter: "allow",
+                plan_exit: "allow",
+                switch_mode: "allow",
+                bash: "allow",
+                edit: "allow",
+                write: "allow",
+              }),
+              user,
+            ),
+            mode: "primary",
+            native: true,
+            color: "red",
           },
           plan: {
             name: "plan",
@@ -162,6 +223,7 @@ const layer = Layer.effect(
               Permission.fromConfig({
                 question: "allow",
                 plan_exit: "allow",
+                switch_mode: "allow",
                 task: {
                   general: "deny",
                 },

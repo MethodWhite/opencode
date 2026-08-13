@@ -1,4 +1,5 @@
 import type { JSONSchema7 } from "@ai-sdk/provider"
+import { isRecord } from "@opencode-ai/util/record"
 import { JsonSchema, Schema } from "effect"
 import type * as Tool from "./tool"
 
@@ -85,10 +86,6 @@ function normalize(value: unknown, options: { stripNull?: boolean } = {}): unkno
   }
 
   return schema
-}
-
-function isRecord(value: unknown): value is JsonObject {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
 function isJsonSchema(value: unknown): value is JSONSchema7 {

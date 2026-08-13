@@ -1,12 +1,10 @@
 import { Option, Schema } from "effect"
+import { isRecord } from "@opencode-ai/util/record"
 import { REDACTED, secretFindings } from "./redaction.js"
 import type { HttpInteraction, RequestMatcher, RequestSnapshot } from "./types.js"
 
 const JsonValue = Schema.fromJsonString(Schema.Unknown)
 export const decodeJson = Schema.decodeUnknownOption(JsonValue)
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  value !== null && typeof value === "object" && !Array.isArray(value)
 
 export const canonicalizeJson = (value: unknown): unknown => {
   if (Array.isArray(value)) return value.map(canonicalizeJson)

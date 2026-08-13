@@ -16,6 +16,7 @@
   "dependencies": {
     "acorn": "8.15.0",
     "effect": "catalog:",
+    "@opencode-ai/util": "workspace:*",
     "typescript": "catalog:"
   },
   "devDependencies": {

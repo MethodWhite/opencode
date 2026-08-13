@@ -43,6 +43,7 @@
         "@opencode-ai/sdk": "workspace:*",
         "@opencode-ai/session-ui": "workspace:*",
         "@opencode-ai/ui": "workspace:*",
+        "@opencode-ai/util": "workspace:*",
         "@pierre/trees": "1.0.0-beta.4",
         "@sentry/solid": "catalog:",
         "@shikijs/transformers": "3.9.2",
@@ -146,6 +147,7 @@
       "name": "@opencode-ai/codemode",
       "version": "1.18.14",
       "dependencies": {
+        "@opencode-ai/util": "workspace:*",
         "acorn": "8.15.0",
         "effect": "catalog:",
         "typescript": "catalog:",
@@ -325,6 +327,7 @@
         "@opencode-ai/llm": "workspace:*",
         "@opencode-ai/plugin": "workspace:*",
         "@opencode-ai/schema": "workspace:*",
+        "@opencode-ai/util": "workspace:*",
         "@openrouter/ai-sdk-provider": "2.9.0",
         "@opentelemetry/api": "1.9.0",
         "@opentelemetry/context-async-hooks": "2.6.1",
@@ -513,6 +516,7 @@
       "dependencies": {
         "@effect/platform-node": "4.0.0-beta.83",
         "@effect/platform-node-shared": "4.0.0-beta.83",
+        "@opencode-ai/util": "workspace:*",
       },
       "devDependencies": {
         "@tsconfig/node22": "catalog:",
@@ -543,6 +547,7 @@
       "version": "1.18.14",
       "dependencies": {
         "@opencode-ai/schema": "workspace:*",
+        "@opencode-ai/util": "workspace:*",
         "@smithy/eventstream-codec": "4.2.14",
         "@smithy/util-utf8": "4.2.2",
         "aws4fetch": "1.0.20",
@@ -605,6 +610,7 @@
         "@opencode-ai/sdk": "workspace:*",
         "@opencode-ai/server": "workspace:*",
         "@opencode-ai/tui": "workspace:*",
+        "@opencode-ai/util": "workspace:*",
         "@openrouter/ai-sdk-provider": "2.9.0",
         "@opentelemetry/api": "1.9.0",
         "@opentelemetry/context-async-hooks": "2.6.1",
@@ -950,6 +956,7 @@
         "@opencode-ai/plugin": "workspace:*",
         "@opencode-ai/sdk": "workspace:*",
         "@opencode-ai/ui": "workspace:*",
+        "@opencode-ai/util": "workspace:*",
         "@opentui/core": "catalog:",
         "@opentui/keymap": "catalog:",
         "@opentui/solid": "catalog:",
@@ -1018,6 +1025,14 @@
       "peerDependencies": {
         "@solidjs/meta": "^0.29.0",
         "solid-js": "^1.9.0",
+      },
+    },
+    "packages/util": {
+      "name": "@opencode-ai/util",
+      "devDependencies": {
+        "@tsconfig/bun": "catalog:",
+        "@types/bun": "catalog:",
+        "@typescript/native-preview": "catalog:",
       },
     },
     "packages/web": {
@@ -2009,6 +2024,8 @@
     "@opencode-ai/tui": ["@opencode-ai/tui@workspace:packages/tui"],
 
     "@opencode-ai/ui": ["@opencode-ai/ui@workspace:packages/ui"],
+
+    "@opencode-ai/util": ["@opencode-ai/util@workspace:packages/util"],
 
     "@opencode-ai/web": ["@opencode-ai/web@workspace:packages/web"],
 

@@ -1,0 +1,14 @@
+Use this tool to switch to a different mode: plan, compose, or build.
+
+This tool switches the current agent immediately, without asking the user. It creates a new user message so the session continues under the selected mode.
+
+Call this tool when:
+- You are in auto mode and have determined the best mode for the request: plan for complex or ambiguous tasks, compose for multi-file features where you should gather context first, build for direct implementation.
+- You completed planning and are ready to implement: switch to build (or compose) to start editing.
+- During execution you realize the task needs planning first: switch to plan.
+
+Do NOT call this tool:
+- For simple, straightforward tasks you can already handle
+- Repeatedly without doing the work — only switch when the mode genuinely changes
+
+Provide a brief reason and, when needed, an instruction so the next mode knows what to do.

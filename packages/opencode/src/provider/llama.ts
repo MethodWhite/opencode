@@ -12,6 +12,19 @@ export interface LlamaWorkerConfig {
   binaryPath?: string
   /** Layers to offload to the GPU via -ngl. Omit to run on CPU only. */
   gpuLayers?: number
+  flashAttention?: boolean
+  fit?: boolean
+  fitTargetMiB?: number
+  reasoning?: boolean
+  /** Quantize the KV cache to q8_0, roughly halving KV memory. */
+  kvCacheQuantized?: boolean
+  threads?: number
+  /**
+   * Number of server slots (-np). Each slot owns its own KV cache, so keeping
+   * this at 1 for a single local model avoids multiplying KV memory. Omit to
+   * let llama-server decide (auto).
+   */
+  slots?: number
 }
 
 interface Worker {
@@ -20,12 +33,46 @@ interface Worker {
 }
 
 const DEFAULT_BINARY = "llama-server"
-const DEFAULT_CONTEXT_LENGTH = 65536
+const DEFAULT_CONTEXT_LENGTH = 16384
 const HEALTH_TIMEOUT_MS = 120_000
 const HEALTH_POLL_MS = 1_000
 
 function logPath(port: number) {
   return path.join(os.tmpdir(), `llama-server-${port}.log`)
+}
+
+/**
+ * Builds the llama-server command line. Context is always set explicitly from
+ * the model's configured limit so the KV cache is sized to what opencode will
+ * actually send. When `fit` is enabled and no `gpuLayers` is given, llama.cpp
+ * auto-tunes the offload to fit the model + KV cache into device memory.
+ */
+export function buildLlamaArgs(config: LlamaWorkerConfig): string[] {
+  const args = [
+    "--host",
+    "127.0.0.1",
+    "--port",
+    String(config.port),
+    "-m",
+    config.modelPath,
+    "-c",
+    String(config.contextLength ?? DEFAULT_CONTEXT_LENGTH),
+    "--alias",
+    config.modelID,
+  ]
+  if (config.gpuLayers !== undefined) {
+    args.push("-ngl", String(config.gpuLayers))
+  }
+  if (config.flashAttention !== undefined) args.push("--flash-attn", config.flashAttention ? "on" : "off")
+  if (config.fit !== undefined) {
+    args.push("--fit", config.fit ? "on" : "off")
+    if (config.fitTargetMiB !== undefined) args.push("--fit-target", String(config.fitTargetMiB))
+  }
+  if (config.reasoning !== undefined) args.push("--reasoning", config.reasoning ? "on" : "off")
+  if (config.kvCacheQuantized !== false) args.push("--cache-type-k", "q8_0", "--cache-type-v", "q8_0")
+  if (config.threads !== undefined) args.push("-t", String(config.threads))
+  if (config.slots !== undefined) args.push("-np", String(config.slots))
+  return args
 }
 
 /**
@@ -98,27 +145,17 @@ export class LlamaManager {
 
   private async spawn(config: LlamaWorkerConfig): Promise<void> {
     const binary = config.binaryPath || DEFAULT_BINARY
-    const args = [
-      "--host",
-      "127.0.0.1",
-      "--port",
-      String(config.port),
-      "-m",
-      config.modelPath,
-      "-c",
-      String(config.contextLength ?? DEFAULT_CONTEXT_LENGTH),
-      "--alias",
-      config.modelID,
-    ]
-    if (config.gpuLayers !== undefined) {
-      args.push("-ngl", String(config.gpuLayers))
-    }
+    const args = buildLlamaArgs(config)
 
     const fd = fs.openSync(logPath(config.port), "a")
     const proc = Process.spawn([binary, ...args], { stdin: "ignore", stdout: fd, stderr: fd })
     this.workers.set(config.modelID, { port: config.port, proc })
 
     const deadline = Date.now() + HEALTH_TIMEOUT_MS
+    const exited = proc.exited.then(
+      () => true,
+      () => true,
+    )
     while (Date.now() < deadline) {
       if (proc.exitCode !== null || proc.signalCode !== null) {
         // Our spawn failed (e.g. the port was already bound), but a healthy
@@ -136,7 +173,12 @@ export class LlamaManager {
       if (await this.isHealthy(config.port)) {
         if (await this.serves(config.port, config.modelPath)) return
       }
-      await new Promise((resolve) => setTimeout(resolve, HEALTH_POLL_MS))
+      // Fail fast if the spawned process died (e.g. missing binary) instead of
+      // polling until HEALTH_TIMEOUT_MS.
+      if (await Promise.race([exited, new Promise((resolve) => setTimeout(resolve, HEALTH_POLL_MS))])) {
+        this.workers.delete(config.modelID)
+        throw new Error(`llama-server exited before becoming healthy. Logs: ${logPath(config.port)}`)
+      }
     }
 
     this.kill(config.modelID)
@@ -148,13 +190,23 @@ export class LlamaManager {
     if (!worker) return
     this.workers.delete(modelID)
     if (!worker.proc) return
-    if (worker.proc.pid) {
-      try {
-        process.kill(worker.proc.pid, "SIGTERM")
-      } catch {
-        // already gone
-      }
+    const pid = worker.proc.pid
+    if (!pid) return
+    // Graceful shutdown: SIGTERM first, then SIGKILL if the worker does not
+    // exit within a short window, so llama-server never lingers as a zombie
+    // holding its port.
+    try {
+      process.kill(pid, "SIGTERM")
+    } catch {
+      return // already gone
     }
+    setTimeout(() => {
+      try {
+        process.kill(pid, "SIGKILL")
+      } catch {
+        // already exited
+      }
+    }, 3_000)
   }
 
   stop(modelID: string) {

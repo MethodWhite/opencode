@@ -1,6 +1,7 @@
 import { Platform, usePlatform } from "@/context/platform"
 import { makePersisted, type AsyncStorage, type SyncStorage } from "@solid-primitives/storage"
 import { checksum } from "@opencode-ai/core/util/encode"
+import { isRecord } from "@opencode-ai/util/record"
 import { createResource, type Accessor } from "solid-js"
 import type { SetStoreFunction, Store } from "solid-js/store"
 import { pathKey } from "@/utils/path-key"
@@ -166,10 +167,6 @@ function write(storage: Storage, key: string, value: string) {
 
 function snapshot(value: unknown) {
   return JSON.parse(JSON.stringify(value)) as unknown
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
 function merge(defaults: unknown, value: unknown): unknown {

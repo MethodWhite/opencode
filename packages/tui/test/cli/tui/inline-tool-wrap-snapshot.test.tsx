@@ -251,7 +251,7 @@ describe("TUI inline tool wrapping", () => {
       { type: "add", relativePath: "a.ts", filePath: "a.ts", patch: "diff", deletions: 0, movePath: undefined },
     ])
     expect(parseTodos([null, { status: "pending" }, { status: "pending", content: "Safe" }])).toEqual([
-      { status: "pending", content: "Safe" },
+      { status: "pending", content: "Safe", priority: undefined },
     ])
     expect(parseQuestions([{}, { question: 1 }, { question: "Continue?" }])).toEqual([{ question: "Continue?" }])
     expect(parseQuestionAnswers([null, ["yes", 1], "no"])).toEqual([[], ["yes"], []])

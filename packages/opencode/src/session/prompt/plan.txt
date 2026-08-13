@@ -23,4 +23,6 @@ Ask the user clarifying questions or ask for their opinion when weighing tradeof
 ## Important
 
 The user indicated that they do not want you to execute yet -- you MUST NOT make any edits, run any non-readonly tools (including changing configs or making commits), or otherwise make any changes to the system. This supersedes any other instructions you have received.
+
+When your planning is complete, call switch_mode with mode "build" to hand off to the build agent (do not ask the user), or plan_exit if you were asked to plan explicitly. If the switch_mode instruction says to return to auto/yolo mode when done, call switch_mode with mode "auto" (or "yolo") instead.
 </system-reminder>

@@ -22,6 +22,10 @@ export const ModelsCommand = effectCmd({
       .option("refresh", {
         describe: "refresh the models cache from models.dev",
         type: "boolean",
+      })
+      .option("json", {
+        describe: "output all matching models as JSON (pipeable)",
+        type: "boolean",
       }),
   handler: Effect.fn("Cli.models")(function* (args) {
     const { Provider } = yield* Effect.promise(() => import("@/provider/provider"))
@@ -33,9 +37,28 @@ export const ModelsCommand = effectCmd({
     const provider = yield* Provider.Service
     const providers = yield* provider.list()
 
+    const collect = (providerID: ProviderV2.ID) => {
+      const sorted = Object.entries(providers[providerID].models).sort(([a], [b]) => a.localeCompare(b))
+      return Object.fromEntries(sorted)
+    }
+
+    if (args.json) {
+      const providerID = args.provider ? ProviderV2.ID.make(args.provider) : undefined
+      if (providerID) {
+        if (!providers[providerID]) return yield* fail(`Provider not found: ${args.provider}`)
+        process.stdout.write(JSON.stringify(collect(providerID), null, 2))
+      } else {
+        const ids = Object.keys(providers).sort()
+        const out: Record<string, unknown> = {}
+        for (const id of ids) out[id] = collect(ProviderV2.ID.make(id))
+        process.stdout.write(JSON.stringify(out, null, 2))
+      }
+      process.stdout.write(EOL)
+      return
+    }
+
     const print = (providerID: ProviderV2.ID, verbose?: boolean) => {
-      const p = providers[providerID]
-      const sorted = Object.entries(p.models).sort(([a], [b]) => a.localeCompare(b))
+      const sorted = Object.entries(providers[providerID].models).sort(([a], [b]) => a.localeCompare(b))
       for (const [modelID, model] of sorted) {
         process.stdout.write(`${providerID}/${modelID}`)
         process.stdout.write(EOL)

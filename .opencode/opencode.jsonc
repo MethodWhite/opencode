@@ -22,7 +22,7 @@
             "baseURL": "http://127.0.0.1:8081/v1",
             "port": 8081,
             "modelPath": "/home/methodwhite/.cache/models/gguf/qwen2.5-3b-instruct-q4_k_m.gguf",
-            "contextLength": 65536
+            "contextLength": 32768
           }
         },
         "gemma-4-E4B-it-OBLITERATED-Q4_K_M.gguf": {
@@ -45,10 +45,15 @@
             "output": 8192
           },
           "options": {
-            "baseURL": "http://127.0.0.1:8083/v1",
-            "port": 8083,
+            "baseURL": "http://127.0.0.1:8080/v1",
+            "port": 8080,
             "modelPath": "/home/methodwhite/.cache/models/gguf/Qwen3.5-9B-Abliterated.Q4_K_M.gguf",
-            "contextLength": 32768
+            "contextLength": 32768,
+            "binaryPath": "/home/methodwhite/.local/bin/llama-server-cuda",
+            "flashAttention": true,
+            "fit": true,
+            "fitTargetMiB": 512,
+            "reasoning": false
           }
         }
       }

@@ -11,6 +11,9 @@ import { Session } from "./session"
 import PROMPT_PLAN from "./prompt/plan.txt"
 import BUILD_SWITCH from "./prompt/build-switch.txt"
 import PLAN_MODE from "./prompt/plan-mode.txt"
+import COMPOSE_MODE from "./prompt/compose-mode.txt"
+import AUTO_MODE from "./prompt/auto-mode.txt"
+import YOLO_MODE from "./prompt/yolo-mode.txt"
 
 export const apply = Effect.fn("SessionReminders.apply")(function* (input: {
   messages: SessionV1.WithParts[]
@@ -22,6 +25,47 @@ export const apply = Effect.fn("SessionReminders.apply")(function* (input: {
   const sessions = yield* Session.Service
   const userMessage = input.messages.findLast((msg) => msg.info.role === "user")
   if (!userMessage) return input.messages
+
+  const assistantMessage = input.messages.findLast((msg) => msg.info.role === "assistant")
+
+  if (input.agent.name === "compose") {
+    if (hasReminder(userMessage, COMPOSE_MODE)) return input.messages
+    userMessage.parts.push({
+      id: PartID.ascending(),
+      messageID: userMessage.info.id,
+      sessionID: userMessage.info.sessionID,
+      type: "text",
+      text: COMPOSE_MODE,
+      synthetic: true,
+    })
+    return input.messages
+  }
+
+  if (input.agent.name === "auto") {
+    if (hasReminder(userMessage, AUTO_MODE)) return input.messages
+    userMessage.parts.push({
+      id: PartID.ascending(),
+      messageID: userMessage.info.id,
+      sessionID: userMessage.info.sessionID,
+      type: "text",
+      text: AUTO_MODE,
+      synthetic: true,
+    })
+    return input.messages
+  }
+
+  if (input.agent.name === "yolo") {
+    if (hasReminder(userMessage, YOLO_MODE)) return input.messages
+    userMessage.parts.push({
+      id: PartID.ascending(),
+      messageID: userMessage.info.id,
+      sessionID: userMessage.info.sessionID,
+      type: "text",
+      text: YOLO_MODE,
+      synthetic: true,
+    })
+    return input.messages
+  }
 
   if (!flags.experimentalPlanMode) {
     if (input.agent.name === "plan") {
@@ -48,7 +92,6 @@ export const apply = Effect.fn("SessionReminders.apply")(function* (input: {
     return input.messages
   }
 
-  const assistantMessage = input.messages.findLast((msg) => msg.info.role === "assistant")
   if (input.agent.name !== "plan" && assistantMessage?.info.agent === "plan") {
     const ctx = yield* InstanceState.context
     const plan = Session.plan(input.session, ctx)
@@ -88,5 +131,9 @@ export const apply = Effect.fn("SessionReminders.apply")(function* (input: {
   userMessage.parts.push(part)
   return input.messages
 })
+
+function hasReminder(message: SessionV1.WithParts, text: string) {
+  return message.parts.some((part) => part.type === "text" && part.synthetic && part.text === text)
+}
 
 export * as SessionReminders from "./reminders"
