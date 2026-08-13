@@ -1,6 +1,7 @@
 import { Formatter, Logger, type LogLevel } from "effect"
 import path from "path"
 import { Global } from "../global"
+import { Redact } from "./redact"
 import { runID } from "./shared"
 
 function formatter(id: string = runID) {
@@ -11,11 +12,11 @@ function formatter(id: string = runID) {
       ["level", output.level],
       ["run", id],
       ...messages.flatMap((value) => (plain(value) ? flatten(value) : [["message", value] as const])),
-      ...(output.cause === undefined ? [] : [["cause", output.cause] as const]),
+      ...(output.cause === undefined ? [] : [["cause", Redact.redact(output.cause)] as const]),
       ...flatten(output.spans),
-      ...flatten(output.annotations),
+      ...flatten(Redact.redact(output.annotations) as Record<string, unknown>),
     ]
-      .map(([key, value]) => `${key}=${format(value)}`)
+      .map(([key, value]) => `${key}=${format(Redact.redact(value))}`)
       .join(" ")
   })
 }

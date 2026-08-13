@@ -2,6 +2,7 @@ import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { httpClient } from "@opencode-ai/core/effect/app-node-platform"
 import { Ripgrep } from "@opencode-ai/core/ripgrep"
 import { PlanExitTool } from "./plan"
+import { SwitchModeTool } from "./switch-mode"
 import { Session } from "@/session/session"
 import { QuestionTool } from "./question"
 import { ShellTool } from "./shell"
@@ -104,6 +105,7 @@ const layer = Layer.effect(
     const todo = yield* TodoWriteTool
     const lsptool = yield* LspTool
     const plan = yield* PlanExitTool
+    const switchMode = yield* SwitchModeTool
     const webfetch = yield* WebFetchTool
     const websearch = yield* WebSearchTool
     const shell = yield* ShellTool
@@ -118,8 +120,6 @@ const layer = Layer.effect(
     const agent = yield* Agent.Service
     const codeMode = flags.experimentalCodeMode ? yield* Effect.promise(() => import("./code-mode")) : undefined
     const codeModeTool = codeMode ? yield* codeMode.CodeModeTool : undefined
-    const thinktool = yield* SequentialThinkingTool
-    const memsearch = yield* MemorySearchTool
 
     const state = yield* InstanceState.make<State>(
       Effect.fn("ToolRegistry.state")(function* (ctx) {
@@ -228,8 +228,9 @@ const layer = Layer.effect(
           question: Tool.init(question),
           lsp: Tool.init(lsptool),
           plan: Tool.init(plan),
-          think: Tool.init(thinktool),
-          mem: Tool.init(memsearch),
+          seqthink: Tool.init(seqthink),
+          memsearch: Tool.init(memsearch),
+          switchMode: Tool.init(switchMode),
           ...(codeModeTool ? { execute: Tool.init(codeModeTool) } : {}),
         })
 
@@ -253,10 +254,9 @@ const layer = Layer.effect(
             tool.seqthink,
             tool.memsearch,
             ...(tool.execute ? [tool.execute] : []),
-            tool.think,
-            tool.mem,
             ...(flags.experimentalLspTool ? [tool.lsp] : []),
             ...(flags.experimentalPlanMode && flags.client === "cli" ? [tool.plan] : []),
+            tool.switchMode,
           ],
           task: tool.task,
           read: tool.read,

@@ -62,6 +62,29 @@ for (const item of targets) {
     .join("-")
   const name = target.replace(binary, "cli")
   console.log(`building ${name}`)
+
+  // Resolve the native OpenTUI shared library so it gets embedded into the
+  // compiled binary. Without it, the runtime looks for
+  // /$bunfs/root/libopentui-h3hyjpa5.so and fails to start the TUI.
+  let opentuiLibPath: string | undefined
+  if (item.os === "linux" || item.os === "darwin") {
+    const pkgName =
+      item.os === "linux"
+        ? `@opentui/core-linux-${item.arch}${item.abi === "musl" ? "-musl" : ""}`
+        : `@opentui/core-darwin-${item.arch}`
+    const pkgPath = path.join(
+      dir,
+      "node_modules",
+      ".bun",
+      `${pkgName}@0.4.5`,
+      "node_modules",
+      pkgName,
+    )
+    const libName = item.os === "linux" ? "libopentui.so" : "libopentui.dylib"
+    const lib = path.join(pkgPath, libName)
+    if (await Bun.file(lib).exists()) opentuiLibPath = lib
+  }
+
   const result = await Bun.build({
     entrypoints: ["./src/index.ts"],
     tsconfig: "./tsconfig.json",
@@ -80,6 +103,7 @@ for (const item of targets) {
       outfile: `./dist/${name}/bin/${binary}`,
       execArgv: [`--user-agent=${binary}/${Script.version}`, "--use-system-ca", "--"],
       windows: {},
+      files: opentuiLibPath ? { "libopentui-h3hyjpa5.so": opentuiLibPath } : {},
     },
     define: {
       OPENCODE_VERSION: `'${Script.version}'`,

@@ -1,6 +1,6 @@
 import { createStore } from "solid-js/store"
 import { dirname } from "node:path"
-import { createMemo, For, Match, Show, Switch } from "solid-js"
+import { createEffect, createMemo, For, Match, Show, Switch } from "solid-js"
 import { Portal, useRenderer, useTerminalDimensions, type JSX } from "@opentui/solid"
 import type { TextareaRenderable } from "@opentui/core"
 import { useTheme, selectedForeground } from "../../context/theme"
@@ -116,6 +116,16 @@ export function PermissionPrompt(props: { request: PermissionRequest; directory?
     stage: "permission" as PermissionStage,
   })
   const pathFormatter = usePathFormatter()
+
+  // The prompt stays mounted while requests queue, so the input must follow the
+  // current request. When the mounted request changes (e.g. the previous one was
+  // resolved), reset any intermediate stage (always/reject) to avoid a stale
+  // prompt that re-asks the same command.
+  const requestID = createMemo(() => props.request.id)
+  createEffect(() => {
+    requestID()
+    setStore("stage", "permission")
+  })
 
   const session = createMemo(() => sync.data.session.find((s) => s.id === props.request.sessionID))
 

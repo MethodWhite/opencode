@@ -107,3 +107,51 @@ test("file logger flattens nested objects", async () => {
   expect(line).toContain("session.id=session-1")
   expect(line).not.toContain("request={")
 })
+
+test("file logger redacts sudo passwords and bearer tokens", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "opencode-log-test-"))
+  await using _ = {
+    async [Symbol.asyncDispose]() {
+      await fs.rm(dir, { recursive: true, force: true })
+    },
+  }
+  const file = path.join(dir, "opencode.log")
+
+  await Effect.logInfo("evaluated", {
+    permission: "bash",
+    pattern: `echo 'hunter2-secret' | sudo -S true`,
+  }).pipe(
+    Effect.annotateLogs({ headers: { authorization: "Bearer sk-live-123456" } }),
+    Effect.provide(Logger.layer([fileLogger(file, "run-a")]).pipe(Layer.provide(NodeFileSystem.layer), Layer.orDie)),
+    Effect.scoped,
+    Effect.runPromise,
+  )
+
+  const line = (await Bun.file(file).text()).trim()
+  expect(line).toContain('pattern="echo \'[REDACTED]\' | sudo -S true"')
+  expect(line).not.toContain("hunter2-secret")
+  expect(line).toContain("headers.authorization=[REDACTED]")
+  expect(line).not.toContain("sk-live-123456")
+})
+
+test("file logger redacts password assignments", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "opencode-log-test-"))
+  await using _ = {
+    async [Symbol.asyncDispose]() {
+      await fs.rm(dir, { recursive: true, force: true })
+    },
+  }
+  const file = path.join(dir, "opencode.log")
+
+  await Effect.logInfo("config", {
+    env: "export DB_PASSWORD=topsecret123",
+  }).pipe(
+    Effect.provide(Logger.layer([fileLogger(file, "run-a")]).pipe(Layer.provide(NodeFileSystem.layer), Layer.orDie)),
+    Effect.scoped,
+    Effect.runPromise,
+  )
+
+  const line = (await Bun.file(file).text()).trim()
+  expect(line).toContain("env=\"export DB_PASSWORD=[REDACTED]\"")
+  expect(line).not.toContain("topsecret123")
+})
