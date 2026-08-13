@@ -3,6 +3,7 @@ import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { Ripgrep } from "@opencode-ai/core/ripgrep"
 import { Cause, Effect, Exit, Layer } from "effect"
+import { ChildProcessSpawner } from "effect/unstable/process/ChildProcessSpawner"
 import { afterEach, describe, expect } from "bun:test"
 import path from "path"
 import type { Permission } from "../../src/permission"
@@ -27,7 +28,12 @@ afterEach(async () => {
   await disposeAllInstances()
 })
 
-const it = testEffect(LayerNode.compile(LayerNode.group([ToolRegistry.node, CrossSpawnSpawner.node, Ripgrep.node])))
+const it = testEffect(
+  LayerNode.compile(LayerNode.group([ToolRegistry.node, CrossSpawnSpawner.node, Ripgrep.node])) as Layer.Layer<
+    ToolRegistry.Service | ChildProcessSpawner | Ripgrep.Service,
+    never
+  >,
+)
 
 describe("tool.skill", () => {
   it.instance("execute returns skill content block with files", () =>

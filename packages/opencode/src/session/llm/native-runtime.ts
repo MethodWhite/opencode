@@ -1,5 +1,5 @@
 import type { Auth } from "@/auth"
-import type { Provider } from "@opencode-ai/core/provider/provider"
+import type { Provider } from "@/provider/provider"
 import { ProviderTransform } from "@opencode-ai/core/provider/transform"
 import { errorMessage } from "@/util/error"
 import { isRecord } from "@opencode-ai/core/util/record"

@@ -49,7 +49,7 @@ const BaseParameterFields = {
       "This should only be set if you mean to resume a previous task (you can pass a prior task_id and the task will continue the same subagent session as before instead of creating a fresh one)",
   }),
   command: Schema.optional(Schema.String).annotate({ description: "The command that triggered this task" }),
-  priority: Schema.optional(Schema.Literal("high", "medium", "low")).annotate({
+  priority: Schema.optional(Schema.Literals(["high", "medium", "low"])).annotate({
     description: "Priority level for this task (high, medium, low)",
   }),
   tags: Schema.optional(Schema.Array(Schema.String)).annotate({
@@ -205,7 +205,7 @@ export const TaskTool = Tool.define(
 
       const runTask = Effect.fn("TaskTool.runTask")(function* () {
         const parts = yield* ops.resolvePromptParts(params.prompt)
-        const contextParts: SessionPrompt.PromptInput["parts"] = []
+        const contextParts: Array<SessionPrompt.PromptInput["parts"][number]> = []
         if (params.priority || (params.tags && params.tags.length > 0)) {
           const lines: string[] = ["## Task Context"]
           if (params.priority) lines.push(`- Priority: ${params.priority}`)

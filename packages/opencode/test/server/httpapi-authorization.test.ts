@@ -4,6 +4,7 @@ import { Effect, Layer, Option, Schema } from "effect"
 import { HttpClient, HttpClientRequest, HttpRouter } from "effect/unstable/http"
 import { HttpApi, HttpApiBuilder, HttpApiEndpoint, HttpApiError, HttpApiGroup } from "effect/unstable/httpapi"
 import { ServerAuth } from "../../src/server/auth"
+import { ServerAuth as ServerAuthCore } from "@opencode-ai/server/auth"
 import {
   Authorization,
   authorizationLayer,
@@ -56,14 +57,15 @@ const v2ApiLayer = HttpRouter.serve(
   { disableListenLog: true, disableLogger: true },
 ).pipe(Layer.provideMerge(NodeHttpServer.layerTest))
 
-const noAuthLayer = ServerAuth.Config.layer({ password: Option.none(), username: "opencode", pqcPublicKey: Option.none() })
-const secretLayer = ServerAuth.Config.layer({ password: Option.some("secret"), username: "opencode", pqcPublicKey: Option.none() })
-const kitSecretLayer = ServerAuth.Config.layer({ password: Option.some("secret"), username: "kit", pqcPublicKey: Option.none() })
+const noAuthLayer = ServerAuth.Config.configLayer({ password: Option.none(), username: "opencode", pqcPublicKey: Option.none() })
+const secretLayer = ServerAuth.Config.configLayer({ password: Option.some("secret"), username: "opencode", pqcPublicKey: Option.none() })
+const kitSecretLayer = ServerAuth.Config.configLayer({ password: Option.some("secret"), username: "kit", pqcPublicKey: Option.none() })
+const coreSecretLayer = ServerAuthCore.Config.configLayer({ password: Option.some("secret"), username: "opencode" })
 
 const it = testEffect(apiLayer.pipe(Layer.provide(noAuthLayer)))
 const itSecret = testEffect(apiLayer.pipe(Layer.provide(secretLayer)))
 const itKitSecret = testEffect(apiLayer.pipe(Layer.provide(kitSecretLayer)))
-const itV2Secret = testEffect(v2ApiLayer.pipe(Layer.provide(secretLayer)))
+const itV2Secret = testEffect(v2ApiLayer.pipe(Layer.provide(secretLayer), Layer.provide(coreSecretLayer)))
 
 const basic = (username: string, password: string) => ServerAuth.header({ username, password }) ?? ""
 

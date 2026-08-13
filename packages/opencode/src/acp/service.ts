@@ -967,20 +967,8 @@ function registerMcpServers(
   registered.set(sessionId, current)
   const pending = new Set<string>()
 
-  // Auto-detect synapsis MCP server in PATH
-  const synapsisServer: McpServer | undefined = (() => {
-    if (servers.some(s => s.name === "synapsis")) return undefined
-    try {
-      const path = globalThis.Bun?.which?.("synapsis")
-      if (!path) return undefined
-      return { name: "synapsis", command: path, args: ["mcp"], env: [] }
-    } catch { return undefined }
-  })()
-
-  const allServers = synapsisServer ? [...servers, synapsisServer] : servers
-
   return Effect.all(
-    allServers
+    servers
       .map((server) => ({ server, config: mcpConfig(server) }))
       .filter((entry) => {
         const key = mcpRegistrationKey(entry.server.name, entry.config)

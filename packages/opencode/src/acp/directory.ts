@@ -1,8 +1,9 @@
-import { Agent } from "@opencode-ai/core/agent/agent"
-import { defaultLayer as agentDefaultLayer } from "@/agent/agent"
+import { Agent } from "@/agent/agent"
 import { Command } from "@/command"
 import { InstanceRef } from "@/effect/instance-ref"
+import { InstanceBootstrap } from "@/project/bootstrap"
 import { InstanceStore } from "@/project/instance-store"
+import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
 import { Provider } from "@/provider/provider"
@@ -140,7 +141,7 @@ export const loaderLayer = Layer.effect(
   }),
 )
 
-export const layer = Layer.effect(
+const layer = Layer.effect(
   Service,
   Effect.gen(function* () {
     const loader = yield* Loader
@@ -200,12 +201,12 @@ export const layer = Layer.effect(
   }),
 )
 
-export const defaultLayer = layer.pipe(
-  Layer.provide(loaderLayer),
-  Layer.provide(Provider.defaultLayer),
-  Layer.provide(agentDefaultLayer),
-  Layer.provide(Command.defaultLayer),
-  Layer.provide(InstanceStore.defaultLayer),
-)
+export const loaderNode = LayerNode.make({
+  service: Loader,
+  layer: loaderLayer,
+  deps: [Provider.node, Agent.node, Command.node, InstanceStore.node],
+})
+
+export const node = LayerNode.make({ service: Service, layer, deps: [loaderNode] })
 
 export * as Directory from "./directory"

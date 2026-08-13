@@ -53,7 +53,7 @@ const layer = (flags: Partial<RuntimeFlags.Info> = {}) =>
       Ripgrep.node,
     ]),
     [[RuntimeFlags.node, RuntimeFlags.layer(flags)]],
-  )
+  ) as Layer.Layer<unknown, never>
 
 const it = testEffect(layer())
 const background = testEffect(layer({ experimentalBackgroundSubagents: true }))

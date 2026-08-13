@@ -56,7 +56,9 @@ const replacements = [
   [RuntimeFlags.node, RuntimeFlags.layer()],
 ] as const
 
-const it = testEffect(LayerNode.compile(root, replacements))
+const toolLayer = LayerNode.compile(root, replacements) as Layer.Layer<ToolRegistry.Service | Agent.Service, never>
+
+const it = testEffect(toolLayer)
 const withCodeMode = testEffect(
   LayerNode.compile(root, [
     [Config.node, configLayer],
@@ -78,7 +80,7 @@ const withCodeMode = testEffect(
         clients: () => Effect.succeed({ weather: {} as any }),
       }),
     ],
-  ]),
+  ]) as Layer.Layer<ToolRegistry.Service | Agent.Service, never>,
 )
 const withEmptyCodeMode = testEffect(
   LayerNode.compile(root, [
@@ -91,9 +93,14 @@ const withEmptyCodeMode = testEffect(
         clients: () => Effect.succeed({}),
       }),
     ],
-  ]),
+  ]) as Layer.Layer<ToolRegistry.Service | Agent.Service, never>,
 )
-const withBrokenPlugin = testEffect(LayerNode.compile(root, [...replacements, [Plugin.node, brokenPluginLayer]]))
+const withBrokenPlugin = testEffect(
+  LayerNode.compile(root, [...replacements, [Plugin.node, brokenPluginLayer]]) as Layer.Layer<
+    ToolRegistry.Service | Agent.Service,
+    never
+  >,
+)
 
 afterEach(async () => {
   await disposeAllInstances()

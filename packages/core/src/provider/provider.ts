@@ -1,7 +1,9 @@
 import { ModelV2 } from "@opencode-ai/core/model"
 import { ProviderV2 } from "@opencode-ai/core/provider"
-import { optionalOmitUndefined } from "@opencode-ai/core/schema"
-import { Schema, Types } from "effect"
+import { Effect, Schema, Types } from "effect"
+
+const optionalOmitUndefined = <A>(schema: Schema.Schema<A>) =>
+  Schema.optional(schema).pipe(Schema.withConstructorDefault(Effect.succeed(undefined)))
 
 const ProviderApiInfo = Schema.Struct({
   id: Schema.String,
@@ -17,10 +19,15 @@ const ProviderModalities = Schema.Struct({
   pdf: Schema.Boolean,
 })
 
+const ProviderInterleavedField = Schema.Union([
+  Schema.Literals(["reasoning", "reasoning_content", "reasoning_text"]),
+  Schema.String,
+])
+
 const ProviderInterleaved = Schema.Union([
   Schema.Boolean,
   Schema.Struct({
-    field: Schema.Literals(["reasoning", "reasoning_content", "reasoning_details"]),
+    field: ProviderInterleavedField,
   }),
 ])
 

@@ -13,6 +13,6 @@ export const defaultLayer: Layer.Layer<Service> = Layer.succeed(Service, Service
   experimentalWorkspaces: false,
 }))
 
-export const node = LayerNode.make(defaultLayer, [])
+export const node = LayerNode.make({ service: Service, layer: defaultLayer, deps: [] })
 
 export * as RuntimeFlags from "./runtime-flags"

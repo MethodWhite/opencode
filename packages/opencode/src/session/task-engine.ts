@@ -116,6 +116,44 @@ function fromRow(row: any): TaskInfo {
   }
 }
 
+type TaskRow = {
+  id: TaskID
+  session_id: SessionID
+  parent_id: TaskID | null
+  title: string
+  description: string | null
+  status: string
+  priority: string
+  category: string
+  tags: string | null
+  depends_on: string | null
+  estimated_hours: number | null
+  due_date: number | null
+  position: number
+  created_at: number
+  updated_at: number
+}
+
+function toRow(task: TaskInfo): TaskRow {
+  return {
+    id: task.id as TaskID,
+    session_id: task.session_id as SessionID,
+    parent_id: (task.parent_id as TaskID) ?? null,
+    title: task.title,
+    description: task.description ?? null,
+    status: task.status,
+    priority: task.priority,
+    category: task.category,
+    tags: task.tags?.length ? task.tags.join(",") : null,
+    depends_on: task.depends_on?.length ? task.depends_on.join(",") : null,
+    estimated_hours: task.estimated_hours ?? null,
+    due_date: task.due_date ?? null,
+    position: task.position,
+    created_at: task.created_at,
+    updated_at: task.updated_at,
+  }
+}
+
 export const layer = Layer.effect(
   Service,
   Effect.gen(function* () {
@@ -126,9 +164,9 @@ export const layer = Layer.effect(
       const id = Identifier.descending("job") as TaskID
       const now = Date.now()
 
-      const existing = yield* (db as any)
+      const existing = yield* (db)
         .select({ count: sql<number>`COUNT(*)` })
-        .from(TaskTable as any)
+        .from(TaskTable)
         .where(eq(TaskTable.session_id, input.session_id))
         .all()
         .pipe(Effect.orDie)
@@ -151,7 +189,7 @@ export const layer = Layer.effect(
         updated_at: now,
       }
 
-      yield* (db as any).insert(TaskTable).values(task).run().pipe(Effect.orDie)
+      yield* (db).insert(TaskTable).values([toRow(task)]).run().pipe(Effect.orDie)
 
       yield* events.publish(Event.Created, { sessionID: input.session_id, task })
       return task
@@ -182,7 +220,7 @@ export const layer = Layer.effect(
         position: input.position ?? task.position,
       }
 
-      yield* (db as any).update(TaskTable).set(updated).where(eq(TaskTable.id, input.id)).run().pipe(Effect.orDie)
+      yield* (db).update(TaskTable).set(toRow(updated)).where(eq(TaskTable.id, input.id as TaskID)).run().pipe(Effect.orDie)
 
       yield* events.publish(Event.Updated, { sessionID: task.session_id, task: updated })
       return updated
@@ -192,12 +230,12 @@ export const layer = Layer.effect(
       const existing = yield* get(taskID)
       const task = Option.getOrNull(existing)
       if (!task) return
-      yield* (db as any).delete(TaskTable).where(eq(TaskTable.id, taskID)).run().pipe(Effect.orDie)
+      yield* (db).delete(TaskTable).where(eq(TaskTable.id, taskID as TaskID)).run().pipe(Effect.orDie)
       yield* events.publish(Event.Deleted, { sessionID: task.session_id, taskID })
     })
 
     const get = Effect.fn("Task.get")(function* (taskID: string) {
-      const rows = yield* (db as any).select().from(TaskTable as any).where(eq(TaskTable.id, taskID)).all().pipe(Effect.orDie)
+      const rows = yield* (db).select().from(TaskTable).where(eq(TaskTable.id, taskID as TaskID)).all().pipe(Effect.orDie)
       if (rows.length === 0) return Option.none<TaskInfo>()
       return Option.some(fromRow(rows[0]))
     })
@@ -206,20 +244,20 @@ export const layer = Layer.effect(
       const conditions = [eq(TaskTable.session_id, sessionID)]
       if (status) conditions.push(eq(TaskTable.status, status))
       if (category) conditions.push(eq(TaskTable.category, category))
-      const rows = yield* (db as any).select().from(TaskTable as any).where(and(...conditions)).orderBy(asc(TaskTable.position)).all().pipe(Effect.orDie)
+      const rows = yield* (db).select().from(TaskTable).where(and(...conditions)).orderBy(asc(TaskTable.position)).all().pipe(Effect.orDie)
       return rows.map(fromRow)
     })
 
     const listByParent = Effect.fn("Task.listByParent")(function* (parentID: string) {
-      const rows = yield* (db as any).select().from(TaskTable as any).where(eq(TaskTable.parent_id, parentID)).orderBy(asc(TaskTable.position)).all().pipe(Effect.orDie)
+      const rows = yield* (db).select().from(TaskTable).where(eq(TaskTable.parent_id, parentID as TaskID)).orderBy(asc(TaskTable.position)).all().pipe(Effect.orDie)
       return rows.map(fromRow)
     })
 
     const reorder = Effect.fn("Task.reorder")(function* (sessionID: SessionID, taskIDs: string[]) {
-      yield* (db as any).transaction((tx) =>
-        Effect.gen(function* () {
+      yield* Effect.tryPromise(() =>
+        (db as any).transaction(async (tx: any) => {
           for (const [idx, id] of taskIDs.entries()) {
-            yield* tx.update(TaskTable).set({ position: idx }).where(and(eq(TaskTable.id, id), eq(TaskTable.session_id, sessionID))).run()
+            await tx.update(TaskTable).set({ position: idx }).where(and(eq(TaskTable.id, id as TaskID), eq(TaskTable.session_id, sessionID))).run()
           }
         }),
       ).pipe(Effect.orDie)
@@ -228,14 +266,14 @@ export const layer = Layer.effect(
 
     const getBlocked = Effect.fn("Task.getBlocked")(function* (taskID: string) {
       const all = yield* list("" as SessionID)
-      return all.filter((t) => t.depends_on?.includes(taskID))
+      return all.filter((t: TaskInfo) => t.depends_on?.includes(taskID))
     })
 
     return Service.of({ create, update, delete: del, get, list, listByParent, reorder, getBlocked })
   }),
 )
 
-export const defaultLayer = layer.pipe(Layer.provide(EventV2Bridge.defaultLayer), Layer.provide(Database.defaultLayer))
-export const node = LayerNode.make(layer, [EventV2Bridge.node, Database.node])
+export const defaultLayer = layer.pipe(Layer.provide(EventV2Bridge.defaultLayer))
+export const node = LayerNode.make({ service: Service, layer, deps: [EventV2Bridge.node, Database.node] })
 
 export * as Task from "./task-engine"

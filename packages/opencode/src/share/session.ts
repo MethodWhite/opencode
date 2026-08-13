@@ -3,7 +3,7 @@ import { Session } from "@/session/session"
 import { SessionID } from "@/session/schema"
 import { Effect, Layer, Scope, Context } from "effect"
 import { Config } from "@/config/config"
-import { RuntimeFlags } from "@opencode-ai/core/effect/runtime-flags"
+import { RuntimeFlags } from "@/effect/runtime-flags"
 import { ShareNext } from "./share-next"
 
 export interface Interface {

@@ -32,6 +32,14 @@ export interface Interface {
   readonly list: () => Effect.Effect<Info[]>
   readonly defaultInfo: () => Effect.Effect<Info>
   readonly defaultAgent: () => Effect.Effect<string>
+  readonly generate: (input: {
+    description: string
+    model?: { providerID: ProviderV2.ID; modelID: ModelV2.ID }
+  }) => Effect.Effect<{
+    identifier: string
+    whenToUse: string
+    systemPrompt: string
+  }, unknown>
 }
 
 export class Service extends Context.Service<Service, Interface>()("@opencode/Agent") {}

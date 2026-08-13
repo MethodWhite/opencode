@@ -192,7 +192,7 @@ const promptRoot = LayerNode.group([
   EventV2Bridge.node,
   Question.node,
   Todo.node,
-  ToolRegistry.node,
+  ToolRegistry.node as LayerNode.Node<ToolRegistry.Service, never, undefined>,
   Skill.node,
   Git.node,
   Ripgrep.node,

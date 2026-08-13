@@ -12,9 +12,9 @@ function View(props: { api: TuiPluginApi; session_id: string }) {
 
   const groups = createMemo(() => {
     const items = list()
-    const pending: typeof items = []
-    const inProgress: typeof items = []
-    const completed: typeof items = []
+    const pending: Array<(typeof items)[number]> = []
+    const inProgress: (typeof pending) = []
+    const completed: (typeof pending) = []
     for (const item of items) {
       if (item.status === "completed") completed.push(item)
       else if (item.status === "in_progress") inProgress.push(item)

@@ -45,7 +45,7 @@ const GeneratedAgent = Schema.Struct({
   systemPrompt: Schema.String,
 })
 
-type State = Interface
+type State = Pick<Interface, "get" | "list" | "defaultInfo" | "defaultAgent">
 
 export const use = serviceUse(Service)
 
@@ -330,8 +330,7 @@ const layer = Layer.effect(
       defaultAgent: Effect.fn("Agent.defaultAgent")(function* () {
         return yield* InstanceState.useEffect(state, (s) => s.defaultAgent())
       }),
-    }) as any
-    svc.generate = Effect.fn("Agent.generate")(function* (input: {
+      generate: Effect.fn("Agent.generate")(function* (input: {
         description: string
         model?: { providerID: ProviderV2.ID; modelID: ModelV2.ID }
       }) {
@@ -399,7 +398,8 @@ const layer = Layer.effect(
         }
 
         return yield* Effect.promise(() => generateObject(params).then((r) => r.object))
-      })
+      }),
+    })
     return svc
   }),
 )

@@ -1,5 +1,5 @@
-import { EventV2 } from "@opencode-ai/core/event"
-import { LayerNode } from "@opencode-ai/core/effect/layer-node"
+import { EventV2 } from "./event"
+import { LayerNode } from "./effect/layer-node"
 import { Context, Effect, Layer } from "effect"
 
 export class Service extends Context.Service<Service, EventV2.Interface>()("@opencode/EventV2Bridge") {}
@@ -12,8 +12,8 @@ const layer = Layer.effect(
   }),
 )
 
-export const defaultLayer = layer.pipe(Layer.provide(EventV2.defaultLayer))
+export const defaultLayer = layer
 
-export const node = LayerNode.make(layer, [EventV2.node])
+export const node = LayerNode.make({ service: Service, layer, deps: [EventV2.node] })
 
 export * as EventV2Bridge from "./event-v2-bridge"
