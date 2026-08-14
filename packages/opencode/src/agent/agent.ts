@@ -164,13 +164,11 @@ const layer = Layer.effect(
             permission: Permission.merge(
               defaults,
               Permission.fromConfig({
+                "*": "allow",
                 question: "allow",
                 plan_enter: "allow",
                 plan_exit: "allow",
                 switch_mode: "allow",
-                bash: "allow",
-                edit: "allow",
-                write: "allow",
               }),
               user,
             ),
