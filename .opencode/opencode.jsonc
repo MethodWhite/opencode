@@ -38,8 +38,8 @@
             "contextLength": 65536
           }
         },
-        "Qwen3.5-9B-Abliterated.Q4_K_M.gguf": {
-          "name": "Qwen 3.5 9B Abliterated (local, uncensored)",
+        "Qwen3.5-9B-Abliterated-HSAQR.Q4_K_M.gguf": {
+          "name": "Qwen 3.5 9B Abliterated HSAQR (local, uncensored)",
           "limit": {
             "context": 32768,
             "output": 8192
@@ -47,7 +47,25 @@
           "options": {
             "baseURL": "http://127.0.0.1:8080/v1",
             "port": 8080,
-            "modelPath": "/home/methodwhite/.cache/models/gguf/Qwen3.5-9B-Abliterated.Q4_K_M.gguf",
+            "modelPath": "/home/methodwhite/.cache/models/gguf/Qwen3.5-9B-Abliterated-HSAQR.Q4_K_M.gguf",
+            "contextLength": 32768,
+            "binaryPath": "/home/methodwhite/.local/bin/llama-server-cuda",
+            "flashAttention": true,
+            "fit": true,
+            "fitTargetMiB": 512,
+            "reasoning": false
+          }
+        },
+        "Qwen3.5-9B-Abliterated-HSAQR-General.Q4_K_M.gguf": {
+          "name": "Qwen 3.5 9B Abliterated HSAQR-General (local, uncensored)",
+          "limit": {
+            "context": 32768,
+            "output": 8192
+          },
+          "options": {
+            "baseURL": "http://127.0.0.1:8083/v1",
+            "port": 8083,
+            "modelPath": "/home/methodwhite/.cache/models/gguf/Qwen3.5-9B-Abliterated-HSAQR-General.Q4_K_M.gguf",
             "contextLength": 32768,
             "binaryPath": "/home/methodwhite/.local/bin/llama-server-cuda",
             "flashAttention": true,

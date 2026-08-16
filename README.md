@@ -14,7 +14,7 @@ llama.cpp local**, modos **compose + auto**, y fixes de harness (caché, observa
 
 Gestión del ciclo de vida del worker `llama-server` por modelo GGUF:
 
-- Modelos locales registrados: `Qwen3.5-9B-Abliterated`, `gemma-4-E4B-it-OBLITERATED`, `qwen2.5-3b`.
+- Modelos locales registrados: `Qwen3.5-9B-Abliterated` (base, HSAQR y HSAQR-General), `gemma-4-E4B-it-OBLITERATED`, `qwen2.5-3b`.
 - `--fit` / `--fit-target` (auto-ajuste del offload a la VRAM disponible).
 - KV cache cuantizado (`--cache-type-k/v q8_0`) → ~mitad de memoria KV.
 - `--flash-attn`, `-ngl` por modelo, `-np` slots, `-t` threads.
