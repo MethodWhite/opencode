@@ -390,6 +390,7 @@ function custom(dep: CustomDep, llama: LlamaManager): Record<string, CustomLoade
               kvCacheQuantized: merged["kvCacheQuantized"] === false ? false : true,
               threads: Number.isFinite(Number(merged["threads"])) ? Number(merged["threads"]) : undefined,
               slots: Number.isFinite(Number(merged["slots"])) ? Number(merged["slots"]) : 1,
+              cacheRam: Number.isFinite(Number(merged["cacheRam"])) ? Number(merged["cacheRam"]) : 2048,
             })
           }
           return sdk.languageModel(modelID)

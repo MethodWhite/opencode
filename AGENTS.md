@@ -169,13 +169,14 @@ const table = sqliteTable("session", {
 
 ## Fork Diagnostics (opencodeMW) — OBLIGATORIO
 
-- **Antes de cualquier PR/commit de cambios de código**: ejecuta `bun run doctor`
-  (script/fork-doctor.ts). Detecta en tiempo real: deployment de capas
-  (LayerNode "Service not found" silencioso), arranque del TUI worker,
-  typecheck de core/opencode/tui/llm, identidades de servicio duplicadas y
-  lint. Un arranque TUI >5s o colgado es un bug (no "código pesado").
+- **Antes de crear/mergear un PR**: ejecuta `bun run doctor` (script/fork-doctor.ts,
+  ~60s). Detecta en tiempo real: deployment de capas (LayerNode "Service not
+  found" silencioso), arranque del TUI worker, typecheck de core/opencode/tui/llm,
+  identidades de servicio duplicadas y lint. Un arranque TUI >5s o colgado es un
+  bug (no "código pesado").
+- **Antes de commits de rutina**: basta `bun run doctor:boot` (~1s, solo el test
+  de arranque del TUI worker). No hace falta el doctor completo en cada commit.
 - **`bun run doctor:ci`** para modo CI (exit != 0 si hay errores del fork).
-- **`bun run doctor:boot`** para solo el test de arranque (rápido).
 - **Errores silenciosos típicos del fork**: servicios con la MISMA identidad
   `@opencode/...` declarados en 2+ archivos rompen el LayerNode deployment con
   "Service not found" y cuelgan el arranque sin loggear. Verifica con el doctor

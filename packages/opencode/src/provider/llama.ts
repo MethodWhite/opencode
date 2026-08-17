@@ -4,6 +4,8 @@ import path from "node:path"
 import { Process } from "@/util/process"
 import { isRecord } from "@/util/record"
 
+const LOG_DIR = path.join(os.homedir(), ".opencode", "logs")
+
 export interface LlamaWorkerConfig {
   modelID: string
   modelPath: string
@@ -25,6 +27,8 @@ export interface LlamaWorkerConfig {
    * let llama-server decide (auto).
    */
   slots?: number
+  /** Maximum prompt cache size in MiB (--cache-ram). Default 2048. Set to 0 to disable. */
+  cacheRam?: number
 }
 
 interface Worker {
@@ -38,7 +42,7 @@ const HEALTH_TIMEOUT_MS = 120_000
 const HEALTH_POLL_MS = 1_000
 
 function logPath(port: number) {
-  return path.join(os.tmpdir(), `llama-server-${port}.log`)
+  return path.join(LOG_DIR, `llama-server-${port}.log`)
 }
 
 /**
@@ -72,7 +76,55 @@ export function buildLlamaArgs(config: LlamaWorkerConfig): string[] {
   if (config.kvCacheQuantized !== false) args.push("--cache-type-k", "q8_0", "--cache-type-v", "q8_0")
   if (config.threads !== undefined) args.push("-t", String(config.threads))
   if (config.slots !== undefined) args.push("-np", String(config.slots))
+  if (config.cacheRam !== undefined) args.push("--cache-ram", String(config.cacheRam))
   return args
+}
+
+const LOG_TAIL_BYTES = 4096
+
+/**
+ * Reads the last N bytes of the llama-server log file to surface the actual
+ * error when the process exits before becoming healthy.
+ */
+function readLogTail(port: number): string {
+  try {
+    const stat = fs.statSync(logPath(port))
+    const fd = fs.openSync(logPath(port), "r")
+    try {
+      const readSize = Math.min(LOG_TAIL_BYTES, stat.size)
+      const buffer = Buffer.alloc(readSize)
+      fs.readSync(fd, buffer, 0, readSize, stat.size - readSize)
+      return buffer.toString("utf-8")
+    } finally {
+      fs.closeSync(fd)
+    }
+  } catch {
+    return ""
+  }
+}
+
+/**
+ * Scans the log tail for known llama-server error patterns and returns a
+ * human-readable summary. Returns undefined when no recognizable error is found.
+ */
+function parseLlamaError(logTail: string): string | undefined {
+  if (/cudaMalloc failed: out of memory/i.test(logTail)) {
+    const match = logTail.match(/allocating ([\d.]+) MiB.*?(\d+) MiB free/)
+    if (match) {
+      return (
+        `CUDA out of memory: tried to allocate ${match[1]} MiB, only ${match[2]} MiB free on GPU. ` +
+        `Try reducing contextLength (e.g. 16384) or fitTargetMiB.`
+      )
+    }
+    return "CUDA out of memory. Try reducing contextLength or fitTargetMiB."
+  }
+  if (/failed to create context/i.test(logTail)) {
+    return "Failed to create llama context (model may be too large for available VRAM)."
+  }
+  if (/error while loading state/i.test(logTail)) {
+    return "Error loading model state."
+  }
+  return undefined
 }
 
 /**
@@ -147,6 +199,7 @@ export class LlamaManager {
     const binary = config.binaryPath || DEFAULT_BINARY
     const args = buildLlamaArgs(config)
 
+    fs.mkdirSync(LOG_DIR, { recursive: true })
     const fd = fs.openSync(logPath(config.port), "a")
     const proc = Process.spawn([binary, ...args], { stdin: "ignore", stdout: fd, stderr: fd })
     this.workers.set(config.modelID, { port: config.port, proc })
@@ -166,8 +219,12 @@ export class LlamaManager {
           return
         }
         this.workers.delete(config.modelID)
+        const tail = readLogTail(config.port)
+        const detail = parseLlamaError(tail)
         throw new Error(
-          `llama-server exited before becoming healthy (code ${proc.exitCode ?? "signal"}). Logs: ${logPath(config.port)}`,
+          `llama-server exited before becoming healthy (code ${proc.exitCode ?? "signal"})` +
+            (detail ? `: ${detail}` : "") +
+            `. Logs: ${logPath(config.port)}`,
         )
       }
       if (await this.isHealthy(config.port)) {
@@ -177,7 +234,13 @@ export class LlamaManager {
       // polling until HEALTH_TIMEOUT_MS.
       if (await Promise.race([exited, new Promise((resolve) => setTimeout(resolve, HEALTH_POLL_MS))])) {
         this.workers.delete(config.modelID)
-        throw new Error(`llama-server exited before becoming healthy. Logs: ${logPath(config.port)}`)
+        const tail = readLogTail(config.port)
+        const detail = parseLlamaError(tail)
+        throw new Error(
+          `llama-server exited before becoming healthy` +
+            (detail ? `: ${detail}` : "") +
+            `. Logs: ${logPath(config.port)}`,
+        )
       }
     }
 
