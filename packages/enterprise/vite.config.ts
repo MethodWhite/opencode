@@ -1,9 +1,12 @@
-import { defineConfig, PluginOption } from "vite"
-import { solidStart } from "@solidjs/start/config"
-import { nitro } from "nitro/vite"
+// NOT VALIDATED END-TO-END (no sst dev / wrangler deploy access from this session).
+// See packages/console/app/vite.config.ts for the full rationale -- same rewrite,
+// same requirement that package.json run this via the `vinxi` CLI, not `vite`.
+// host/port move to CLI flags (see package.json); tailwindcss()/worker are plain
+// Vite options so they go through the `vite` passthrough.
+import { defineConfig } from "@solidjs/start/config"
 import tailwindcss from "@tailwindcss/vite"
 
-const nitroConfig: any = (() => {
+const nitroConfig: Record<string, unknown> = (() => {
   const target = process.env.OPENCODE_DEPLOYMENT_TARGET
   if (target === "cloudflare") {
     return {
@@ -18,20 +21,17 @@ const nitroConfig: any = (() => {
 })()
 
 export default defineConfig({
-  plugins: [
-    tailwindcss(),
-    solidStart() as PluginOption,
-    nitro({
-      ...nitroConfig,
-      baseURL: process.env.OPENCODE_BASE_URL,
-    }),
-  ],
   server: {
-    host: "0.0.0.0",
-    allowedHosts: true,
-    port: 3002,
+    ...nitroConfig,
+    baseURL: process.env.OPENCODE_BASE_URL,
   },
-  worker: {
-    format: "es",
+  vite: {
+    plugins: [tailwindcss()],
+    server: {
+      allowedHosts: true,
+    },
+    worker: {
+      format: "es",
+    },
   },
 })

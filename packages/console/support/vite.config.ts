@@ -1,25 +1,25 @@
-import { defineConfig, PluginOption } from "vite"
-import { solidStart } from "@solidjs/start/config"
-import { nitro } from "nitro/vite"
+// NOT VALIDATED END-TO-END (no sst dev / wrangler deploy access from this session).
+// See packages/console/app/vite.config.ts for the full rationale -- same rewrite,
+// same requirement that package.json run this via the `vinxi` CLI, not `vite`.
+import { defineConfig } from "@solidjs/start/config"
 
 export default defineConfig({
-  plugins: [
-    solidStart() as PluginOption,
-    nitro({
-      compatibilityDate: "2024-09-19",
-      preset: "cloudflare_module",
-      cloudflare: {
-        nodeCompat: true,
-      },
-    }),
-  ],
   server: {
-    allowedHosts: true,
-  },
-  build: {
-    rollupOptions: {
-      external: ["cloudflare:workers"],
+    compatibilityDate: "2024-09-19",
+    preset: "cloudflare_module",
+    cloudflare: {
+      nodeCompat: true,
     },
-    minify: false,
+  },
+  vite: {
+    server: {
+      allowedHosts: true,
+    },
+    build: {
+      rollupOptions: {
+        external: ["cloudflare:workers"],
+      },
+      minify: false,
+    },
   },
 })

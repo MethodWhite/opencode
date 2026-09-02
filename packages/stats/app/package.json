@@ -7,9 +7,9 @@
   "license": "MIT",
   "scripts": {
     "typecheck": "tsgo --noEmit",
-    "dev": "vite dev --host 0.0.0.0",
-    "build": "vite build",
-    "start": "vite start"
+    "dev": "vinxi dev --host",
+    "build": "vinxi build",
+    "start": "vinxi start"
   },
   "dependencies": {
     "@ibm/plex": "6.4.1",
@@ -27,6 +27,7 @@
     "solid-js": "catalog:",
     "sst": "catalog:",
     "topojson-client": "3.1.0",
+    "vinxi": "0.5.11",
     "vite": "catalog:",
     "world-atlas": "2.0.2"
   },

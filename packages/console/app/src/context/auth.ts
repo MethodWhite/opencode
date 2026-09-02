@@ -11,7 +11,7 @@ export const AuthClient = createClient({
   issuer: import.meta.env.VITE_AUTH_URL,
 })
 
-import { useSession } from "@solidjs/start/http"
+import { useSession } from "vinxi/http"
 import { Resource } from "@opencode-ai/console-resource"
 
 export interface AuthSession {
