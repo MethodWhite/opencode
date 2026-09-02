@@ -243,7 +243,7 @@ export function deriveInactiveColor(brightColor: ColorInput, factor: number = 0.
   return RGBA.fromValues(baseRgba.r, baseRgba.g, baseRgba.b, factor)
 }
 
-export type KnightRiderStyle = "blocks" | "diamonds"
+export type KnightRiderStyle = "blocks" | "diamonds" | "cat"
 
 export interface KnightRiderOptions {
   width?: number
@@ -316,6 +316,11 @@ export function createFrames(options: KnightRiderOptions = {}): string[] {
           return shapes[Math.min(index, shapes.length - 1)]
         }
         return "·"
+      }
+
+      if (style === "cat") {
+        // El gato corre sobre una fila de galletas, de un lado al otro (rebote).
+        return index === 0 ? "🐱" : "🍪"
       }
 
       // Default to blocks

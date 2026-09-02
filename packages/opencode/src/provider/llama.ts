@@ -33,6 +33,7 @@ export interface LlamaWorkerConfig {
 
 interface Worker {
   port: number
+  signature: string
   proc?: Process.Child
 }
 
@@ -150,9 +151,10 @@ export class LlamaManager {
 
   private async ensureUnsafe(config: LlamaWorkerConfig): Promise<void> {
     const tracked = this.workers.get(config.modelID)
+    const signature = JSON.stringify({ modelPath: config.modelPath, args: buildLlamaArgs(config) })
 
     if (tracked && (await this.isHealthy(tracked.port))) {
-      if (await this.serves(tracked.port, config.modelPath)) return
+      if (tracked.signature === signature && (await this.serves(tracked.port, config.modelPath))) return
       this.kill(config.modelID)
     }
 
@@ -161,7 +163,7 @@ export class LlamaManager {
         // A healthy server we did not spawn is serving this model: reuse it
         // without taking ownership, so it is not killed on shutdown.
         if (!tracked) {
-          this.workers.set(config.modelID, { port: config.port })
+          this.workers.set(config.modelID, { port: config.port, signature })
         }
         return
       }
@@ -202,7 +204,11 @@ export class LlamaManager {
     fs.mkdirSync(LOG_DIR, { recursive: true })
     const fd = fs.openSync(logPath(config.port), "a")
     const proc = Process.spawn([binary, ...args], { stdin: "ignore", stdout: fd, stderr: fd })
-    this.workers.set(config.modelID, { port: config.port, proc })
+    this.workers.set(config.modelID, {
+      port: config.port,
+      signature: JSON.stringify({ modelPath: config.modelPath, args }),
+      proc,
+    })
 
     const deadline = Date.now() + HEALTH_TIMEOUT_MS
     const exited = proc.exited.then(
@@ -215,7 +221,10 @@ export class LlamaManager {
         // server may have taken over the port in the meantime (a concurrent
         // or orphaned process). Adopt it instead of failing.
         if ((await this.isHealthy(config.port)) && (await this.serves(config.port, config.modelPath))) {
-          this.workers.set(config.modelID, { port: config.port })
+          this.workers.set(config.modelID, {
+            port: config.port,
+            signature: JSON.stringify({ modelPath: config.modelPath, args }),
+          })
           return
         }
         this.workers.delete(config.modelID)

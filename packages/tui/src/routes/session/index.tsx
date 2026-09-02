@@ -2537,12 +2537,17 @@ function ApplyPatch(props: ToolProps) {
 
 function TodoWrite(props: ToolProps) {
   const { theme } = useTheme()
-  const todos = createMemo(() => parseTodos(props.input.todos))
+  const todos = createMemo(() => {
+    const metadataTodos = props.metadata?.todos
+    return metadataTodos && parseTodos(metadataTodos).length > 0
+      ? parseTodos(metadataTodos)
+      : parseTodos(props.input.todos)
+  })
   const done = createMemo(() => todos().filter((t) => t.status === "completed").length)
   const active = createMemo(() => todos().filter((t) => t.status !== "completed" && t.status !== "cancelled").length)
   return (
     <Switch>
-      <Match when={parseTodos(props.metadata.todos).length}>
+      <Match when={todos().length}>
         <BlockTool title="# Todos" part={props.part}>
           <box>
             <box flexDirection="row" gap={1} marginBottom={1}>

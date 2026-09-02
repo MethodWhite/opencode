@@ -69,6 +69,17 @@ it.instance("build agent has correct default properties", () =>
   }),
 )
 
+it.instance("yolo agent allows every permission without prompting", () =>
+  Effect.gen(function* () {
+    const yolo = yield* load((svc) => svc.get("yolo"))
+    expect(yolo).toBeDefined()
+    expect(evalPerm(yolo, "bash")).toBe("allow")
+    expect(evalPerm(yolo, "read")).toBe("allow")
+    expect(Permission.evaluate("read", ".env", yolo!.permission).action).toBe("allow")
+    expect(evalPerm(yolo, "question")).toBe("allow")
+  }),
+)
+
 it.instance("plan agent denies edits except .opencode/plans/*", () =>
   Effect.gen(function* () {
     const plan = yield* load((svc) => svc.get("plan"))

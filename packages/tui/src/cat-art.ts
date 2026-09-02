@@ -1,11 +1,9 @@
 /**
- * cat-art.ts — Arte ASCII del gato opencodeMW (animación frame-by-frame eficiente).
+ * cat-art.ts — Wordmark ASCII de MethodWhite (animación frame-by-frame eficiente).
  *
- * Ciclo de animación con 4 frames que alternan parpadeo y cola:
- *   frame 0: ojos abiertos, cola baja
- *   frame 1: parpadeo, cola arriba
- *   frame 2: ojos abiertos, cola en espiral
- *   frame 3: parpadeo, cola baja
+ * Ciclo de animación con 2 frames que alternan el estilo del marco (pulso sutil):
+ *   frame 0: marco simple
+ *   frame 1: marco doble
  *
  * Solo se redibuja cuando el frame cambia (delta optimizado en el painter),
  * sin consumo continuo de CPU — mismo enfoque que el sistema video→ASCII.
@@ -18,20 +16,12 @@ export type CatFrame = {
 
 export const CAT_FRAMES: CatFrame[] = [
   {
-    lines: ["   /\\_/\\   ", "  ( o.o )  ", "   > ^ <   ", "  (_____)  ", "    U U    "],
-    durationMs: 1000,
+    lines: ["┌─────────────────┐", "│   MethodWhite   │", "└─────────────────┘"],
+    durationMs: 1200,
   },
   {
-    lines: ["   /\\_/\\  |", "  ( -.- )  |", "   > ^ <   |", "  (_____)  |", "    U U    /"],
-    durationMs: 200,
-  },
-  {
-    lines: ["   /\\_/\\   ", "  ( o.o ) ~", "   > ^ <   ", "  (_____)  ", "    U U    "],
-    durationMs: 1000,
-  },
-  {
-    lines: ["   /\\_/\\  \\", "  ( -.- )   ", "   > ^ <   ", "  (_____)  ", "    U U    "],
-    durationMs: 200,
+    lines: ["╔═════════════════╗", "║   MethodWhite   ║", "╚═════════════════╝"],
+    durationMs: 1200,
   },
 ]
 

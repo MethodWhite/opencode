@@ -40,22 +40,20 @@ const OPENAI_HEADER_TIMEOUT_DEFAULT = 300_000
 // calling when a tool schema declares large maxLength/maxItems values.
 const MAX_REPETITIONS = 1999
 
-function clampToolSchemaRepetitions(schema: any) {
-  if (typeof schema !== "object" || schema === null) return
-  for (const key of ["maxLength", "minLength", "maxItems", "minItems"] as const) {
+function clampToolSchemaRepetitions(schema: any): any {
+  if (typeof schema !== "object" || schema === null) return schema
+  const result: Record<string, any> = Array.isArray(schema) ? [] : {}
+  for (const key of Object.keys(schema) as string[]) {
     const value = schema[key]
-    if (typeof value === "number" && value > MAX_REPETITIONS) schema[key] = MAX_REPETITIONS
+    if (typeof value === "number" && ["maxLength", "minLength", "maxItems", "minItems"].includes(key) && value > MAX_REPETITIONS) {
+      result[key] = MAX_REPETITIONS
+    } else if (typeof value === "object" && value !== null) {
+      result[key] = clampToolSchemaRepetitions(value)
+    } else {
+      result[key] = value
+    }
   }
-  for (const key of ["properties", "$defs", "definitions"]) {
-    const obj = schema[key]
-    if (obj) for (const value of Object.values(obj)) clampToolSchemaRepetitions(value)
-  }
-  const items = schema["items"]
-  if (Array.isArray(items)) for (const value of items) clampToolSchemaRepetitions(value)
-  else if (items) clampToolSchemaRepetitions(items)
-  if (Array.isArray(schema["prefixItems"]))
-    for (const value of schema["prefixItems"]) clampToolSchemaRepetitions(value)
-  if (schema["additionalProperties"]) clampToolSchemaRepetitions(schema["additionalProperties"])
+  return result
 }
 
 // Small local models choke on the full tool payload (~30K+ tokens from all MCP
@@ -1607,6 +1605,11 @@ const layer = Layer.effect(
         // now read config providers - includes any modifications from plugin config() hook
         const configProviders = Object.entries(cfg.provider ?? {})
         const disabled = new Set(cfg.disabled_providers ?? [])
+        // The local llama.cpp provider must be opted into explicitly (options.enabled: true)
+        // even when its config block is present, so picking cloud-only providers never
+        // silently spawns llama-server.
+        if (cfg.provider?.["llamacpp-local"]?.options?.["enabled"] !== true)
+          disabled.add(ProviderV2.ID.make("llamacpp-local"))
         const enabled = cfg.enabled_providers ? new Set(cfg.enabled_providers) : null
 
         function isProviderAllowed(providerID: ProviderV2.ID): boolean {
@@ -1957,10 +1960,9 @@ const layer = Layer.effect(
                 if (typeof fn.description === "string") {
                   fn.description = truncateDescription(fn.description, MAX_TOOL_DESCRIPTION_LENGTH)
                 }
-                const parameters = fn.parameters
-                if (parameters) {
-                  clampToolSchemaRepetitions(parameters)
-                  truncateToolDescriptions(parameters)
+                if (fn.parameters) {
+                  fn.parameters = clampToolSchemaRepetitions(fn.parameters)
+                  truncateToolDescriptions(fn.parameters)
                 }
               }
               args.tools = filterLocalTools(tools, Array.isArray(args.messages) ? args.messages : [])
@@ -2213,7 +2215,10 @@ const layer = Layer.effect(
         return { providerID: entry.providerID, modelID: entry.modelID }
       }
 
-      const configured = Object.keys(cfg.provider ?? {})
+      // Only count providers that are both declared in config AND actually registered
+      // (e.g. excludes llamacpp-local when it's disabled) so a disabled/unavailable
+      // provider can't monopolize the "configured" restriction and starve real candidates.
+      const configured = Object.keys(cfg.provider ?? {}).filter((id) => id in s.providers)
       const provider = Object.values(s.providers).find((p) => configured.length === 0 || configured.includes(p.id))
       if (!provider) return yield* new NoProvidersError()
       const [model] = sort(Object.values(provider.models))

@@ -74,6 +74,16 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
       }
     }
 
+    // createAgent's move/set need to carry the active model over to the newly-selected agent
+    // (so Tab-cycling modes doesn't fall back to fallbackModel/llama-server), but the model
+    // store only exists inside createModel(), which itself reads agent.current(). createModel()
+    // fills this in once it's built, right before this function's callers need it.
+    const modelBridge: {
+      current?: () => { providerID: string; modelID: string } | undefined
+      has?: (name: string) => boolean
+      inherit?: (name: string, model: { providerID: string; modelID: string }) => void
+    } = {}
+
     function createAgent() {
       const agents = createMemo(() => sync.data.agent.filter((agent) => agent.mode !== "subagent" && !agent.hidden))
       const visibleAgents = createMemo(() => sync.data.agent.filter((agent) => !agent.hidden))
@@ -103,7 +113,9 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
               message: `Agent not found: ${name}`,
               duration: 3000,
             })
+          const previous = modelBridge.current?.()
           setAgentStore("current", name)
+          if (previous && modelBridge.has?.(name) === false) modelBridge.inherit?.(name, previous)
         },
         move(direction: 1 | -1) {
           batch(() => {
@@ -113,7 +125,9 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
             if (next < 0) next = agents().length - 1
             if (next >= agents().length) next = 0
             const value = agents()[next]
+            const previous = modelBridge.current?.()
             setAgentStore("current", value.name)
+            if (previous && modelBridge.has?.(value.name) === false) modelBridge.inherit?.(value.name, previous)
           })
         },
         color(name: string) {
@@ -244,6 +258,10 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
           ) ?? undefined
         )
       })
+
+      modelBridge.current = currentModel
+      modelBridge.has = (name) => !!modelStore.model[name]
+      modelBridge.inherit = (name, value) => setModelStore("model", name, value)
 
       return {
         current: currentModel,

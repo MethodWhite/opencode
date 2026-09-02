@@ -1286,10 +1286,19 @@ export function Prompt(props: PromptProps) {
     setStore("extmarkToPartIndex", new Map())
   }
 
+  // While generating, reflects the live submode (e.g. yolo delegating into plan via
+  // switch_mode) instead of only the Tab-selected top-level agent; idle, it's the same
+  // as the selected agent, which governs the next message.
+  const effectiveAgent = createMemo(() =>
+    status().type !== "idle"
+      ? (local.agent.list().find((a) => a.name === lastUserMessage()?.agent) ?? local.agent.current())
+      : local.agent.current(),
+  )
+
   const highlight = createMemo(() => {
     if (leader()) return theme.border
     if (store.mode === "shell") return theme.primary
-    const agent = local.agent.current()
+    const agent = effectiveAgent()
     if (!agent) return theme.border
     return local.agent.color(agent.name)
   })
@@ -1321,22 +1330,19 @@ export function Prompt(props: PromptProps) {
   })
 
   const spinnerDef = createMemo(() => {
-    const agent =
-      status().type !== "idle"
-        ? (local.agent.list().find((a) => a.name === lastUserMessage()?.agent) ?? local.agent.current())
-        : local.agent.current()
+    const agent = effectiveAgent()
     const color = agent ? local.agent.color(agent.name) : theme.border
     return {
       frames: createFrames({
         color,
-        style: "blocks",
+        style: "cat",
         inactiveFactor: 0.6,
         // enableFading: false,
         minAlpha: 0.3,
       }),
       color: createColors({
         color,
-        style: "blocks",
+        style: "cat",
         inactiveFactor: 0.6,
         // enableFading: false,
         minAlpha: 0.3,

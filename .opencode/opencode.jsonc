@@ -5,6 +5,9 @@
       "npm": "@ai-sdk/openai-compatible",
       "name": "llama.cpp (local, managed)",
       "options": {
+        // Must be explicitly true or this provider (and llama-server autospawn) stays off,
+        // even with this block present — set to false when you want cloud-only for a session.
+        "enabled": true,
         "baseURL": "http://127.0.0.1:8080/v1",
         "apiKey": "not-needed",
         "headerTimeout": 1800000,
@@ -12,50 +15,6 @@
         "binaryPath": "/home/methodwhite/.local/bin/llama-server"
       },
       "models": {
-        "qwen2.5-3b-instruct-q4_k_m.gguf": {
-          "name": "Qwen 2.5 3B (local, tool calling fiable)",
-          "limit": {
-            "context": 32768,
-            "output": 8192
-          },
-          "options": {
-            "baseURL": "http://127.0.0.1:8081/v1",
-            "port": 8081,
-            "modelPath": "/home/methodwhite/.cache/models/gguf/qwen2.5-3b-instruct-q4_k_m.gguf",
-            "contextLength": 32768
-          }
-        },
-        "gemma-4-E4B-it-OBLITERATED-Q4_K_M.gguf": {
-          "name": "Gemma 4 E4B (local, formato tool nativo incompatible)",
-          "limit": {
-            "context": 65536,
-            "output": 8192
-          },
-          "options": {
-            "baseURL": "http://127.0.0.1:8082/v1",
-            "port": 8082,
-            "modelPath": "/home/methodwhite/Proyectos/ai-ml/models/llm/gemma-4-E4B-it-OBLITERATED-Q4_K_M.gguf",
-            "contextLength": 65536
-          }
-        },
-        "Qwen3.5-9B-Abliterated-HSAQR.Q4_K_M.gguf": {
-          "name": "Qwen 3.5 9B Abliterated HSAQR (local, uncensored)",
-          "limit": {
-            "context": 32768,
-            "output": 8192
-          },
-          "options": {
-            "baseURL": "http://127.0.0.1:8080/v1",
-            "port": 8080,
-            "modelPath": "/home/methodwhite/.cache/models/gguf/Qwen3.5-9B-Abliterated-HSAQR.Q4_K_M.gguf",
-            "contextLength": 32768,
-            "binaryPath": "/home/methodwhite/.local/bin/llama-server-cuda",
-            "flashAttention": true,
-            "fit": true,
-            "fitTargetMiB": 512,
-            "reasoning": false
-          }
-        },
         "Qwen3.5-9B-Abliterated-HSAQR-General.Q4_K_M.gguf": {
           "name": "Qwen 3.5 9B Abliterated HSAQR-General (local, uncensored)",
           "limit": {

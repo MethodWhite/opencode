@@ -7,10 +7,10 @@ const ACCENT_CHARS = new Set(["^", ".", "-", "~", "|", "\\", "/"])
 const SHADOW_CHARS = new Set(["_", "(", ")", ">"])
 
 /**
- * CatLogo — gato opencodeMW animado (JSX puro, sin renderable custom).
+ * CatLogo — wordmark MethodWhite animado (JSX puro, sin renderable custom).
  *
  * Animación eficiente: un interval de 100ms solo actualiza el frame cuando
- * cambia (parpadeo/cola cada ~2.4s), sin redibujar continuamente.
+ * cambia (pulso de marco cada ~1.2s), sin redibujar continuamente.
  */
 export function CatLogo() {
   const { theme } = useTheme()
