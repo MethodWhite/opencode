@@ -86,7 +86,7 @@ jobs:
         with:
           name: hash-${{ matrix.system }}
           path: hash.txt
-          retention-days: 1
+          retention-days: 14
 
   update-hashes:
     needs: compute-hash
