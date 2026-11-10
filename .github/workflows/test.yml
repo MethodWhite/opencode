@@ -139,7 +139,7 @@ jobs:
         with:
           name: playwright-${{ matrix.settings.name }}-${{ github.run_attempt }}
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: 14
           path: |
             packages/app/e2e/test-results
             packages/app/e2e/playwright-report
